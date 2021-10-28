@@ -1,9 +1,9 @@
 # miscface
-Data Mining Final Project 2021
+## Data Mining Final Project 2021
 
 ![misc.face()](https://s3-ap-south-1.amazonaws.com/av-blog-media/wp-content/uploads/2017/02/28105325/DF_31.png)
 
-# Table of Contents
+## Table of Contents
 1. [Team Members](#team_members)
 2. [Timeline](#timeline)
 3. [Topic Proposal](#topic_proposal)
