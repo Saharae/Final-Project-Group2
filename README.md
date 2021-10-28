@@ -22,9 +22,9 @@
 ## Timeline
 - [X] Dataset and Topic Chosen - Oct 28th
 - [ ] Group Proposal - Nov 1st
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ] Lorem ipsum
+- [ ] Lorem ipsum
+- [ ] Lorem ipsum
 - [ ] Final Presentation - Dec ?
 
 # <a name="topic_proposal"></a>
