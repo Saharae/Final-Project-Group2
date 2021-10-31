@@ -1,4 +1,4 @@
-# miscface
+# miscface - Group2
 ## Data Mining Final Project 2021
 
 ![misc.face()](https://s3-ap-south-1.amazonaws.com/av-blog-media/wp-content/uploads/2017/02/28105325/DF_31.png)
