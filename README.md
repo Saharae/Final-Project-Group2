@@ -47,3 +47,5 @@
 
 # <a name="resources"></a>
 ## Additional Resources
+* [Feature Engineering for Categorical Data](https://medium.com/geekculture/feature-engineering-for-categorical-data-a77a04b3308)
+* [Categorical Data](https://towardsdatascience.com/understanding-feature-engineering-part-2-categorical-data-f54324193e63)

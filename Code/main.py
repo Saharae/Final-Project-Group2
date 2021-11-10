@@ -17,13 +17,17 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 
-# Run data download and setup
+if __name__ == "__main__":
+    # Run data download and setup
 
-# Data preprocessing
+    # Data preprocessing
 
-# EDA
+    # EDA
 
-# Modeling
+    # Modeling
 
 
-# GUI
+    # GUI
+    pass
+
+    
