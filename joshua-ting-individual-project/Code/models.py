@@ -1,34 +1,47 @@
-# This file contains the models that we used for our dataset
+# This file runs our modeling 
 
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import os
 
-from sklearn.linear_model import LinearRegression
+from models_helper import Dataset, LinearRegression, RandomForest, GradientBoost, AdaBoost, get_repo_root
 
-class Model:
-    def __init__(self, dataset):
-        self.dataset = dataset
-    
-    def fit(self):
-        return
-    
-    def predict(self):
-        return
-    
-    def get_score(self):
-        return
+############ Set random seed ############
+random_seed = 33
 
-class LinearRegression(Model):
-    def __init__(self):
-        return
+# Set random seed in numpy
+np.random.seed(random_seed)
 
-class RandomForest(Model):
-    def __init__(self):
-        return
+############ Get and set current path ############
+current_path = get_repo_root()
 
-class GradientBoost(Model):
-    def __init__(self):
-        return
-    
+############ Get Data ############
+data_file = 'movies_data_for_model.csv'
+movies = Dataset(current_path + '/data/' + data_file)
+print(movies.get_dataset().columns)
+print(movies.get_dataset()['males_30age_avg_vote'])
+
+# Split train, val, test
+
+############ Set Up Models ############
+models = {'sgd': LinearRegression()}
+
+
+# if __name__ == "__main__":
+#     print(__name__, 'executed')
+# else:
+#     print('Importing:', __name__)
+
+# numerical - 
+        #Already have: 'duration', 'budget', 'worldwide_gross_income', 'usa_gross_income', '
+        #Need to calc: 'age of director at movie release', 'age of writer', 'length of director name',
+        #            : 'length of movie title', 
+
+# categorical - 
+        #These are going to be too large to try and One Hot Encode. We could also just encode it from 1,2,..,n for each label
+        #but we can introduce ordinal bias to non-ordinal data
+            #title', 'date_published', 'genre1', 'genre2', 'genre3', country', 'language', 'director', 'writer', 'production_company', 'actors', 
+        # Feature engineering and selection: Let's try to capture the essence (signals of the feature) using numerical data.
+
+# Target label - 'weighted_average_vote'
