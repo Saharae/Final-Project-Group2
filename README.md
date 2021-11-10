@@ -26,6 +26,11 @@
 - [ ] Rough Draft of presentation - Nov 29nd
 - [ ] Final Presentation and report - Dec 6th
 
+## Things to Remember
+- [ ] READMEs and documentation
+- [ ] requirements.txt
+- [ ] 
+ 
 # <a name="topic_proposal"></a>
 ## Topic Proposal
 * [Topic Proposal Google Doc](https://docs.google.com/document/d/1S1kVV3D69of6toTyy8Y6Jet_hQxWgXRaJ3Osm7h5Meo/edit?usp=sharing)
