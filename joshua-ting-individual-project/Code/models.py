@@ -7,17 +7,31 @@ import os
 
 from sklearn.linear_model import LinearRegression
 
-class Model:
+class Dataset:
     def __init__(self, dataset):
         self.dataset = dataset
-    
-    def fit(self):
+
+    def split_train_val_test(self, train_split, val_split):
+        '''
+        Method to split train, val, and test dataset
+
+        Parameters
+            train_split: float between 0-1, how much portion of dataset for train
+            val_split: float between 0-1, how much portion of dataset for validation
+
+        Return
+            train_df: DF for training
+            val_df: DF for validation
+            test_df: DF for testing
+        '''
         return
-    
-    def predict(self):
+
+    def split_features_target(self):
+
         return
-    
-    def get_score(self):
+
+class Model(Dataset):
+    def __init__(self):
         return
 
 class LinearRegression(Model):
@@ -31,4 +45,10 @@ class RandomForest(Model):
 class GradientBoost(Model):
     def __init__(self):
         return
-    
+
+class AdaBoost(Model):
+    def __init__(self):
+        return        
+
+
+        

@@ -7,10 +7,20 @@ import os
 
 from sklearn.linear_model import LinearRegression
 
-from models import LinearRegression, RandomForest, GradientBoost
+from models import Dataset, LinearRegression, RandomForest, GradientBoost
+
+############ Set random seed ############
+random_seed = 33
+
+# Set random seed in numpy
+np.random.seed(random_seed)
+
+############ Get Data ############
+
+# Load Data
 
 
+# Split train, val, test
 
-model1 = LinearRegression(movies_df)
-model2 = RandomForest(movies_df)
-model3 = GradientBoost(movies_df)
+############ Set Up Models ############
+models = {'sgd': SGDRegressor(random_state=random_seed)}
