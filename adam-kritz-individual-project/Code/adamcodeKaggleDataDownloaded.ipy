@@ -15,9 +15,6 @@ import os
 
 def download():
     
-    # this is just my username and a key they generated for me
-    os.environ['KAGGLE_USERNAME'] = "adamkritz"
-    os.environ['KAGGLE_KEY'] = "05c2d7615e732897d1f9e6f75613ee41"
 
     # dont push y if you dont wanna make you own working directiory
     a = input('set a working directory to download to? (y/n)')
@@ -26,6 +23,9 @@ def download():
         b = input('input working directory')
         os.chdir(b)
 
+    # this is just my username and a key they generated for me
+    os.environ['KAGGLE_USERNAME'] = "adamkritz"
+    os.environ['KAGGLE_KEY'] = "05c2d7615e732897d1f9e6f75613ee41"
     
     kaggle.api.authenticate()
     kaggle.api.dataset_download_files('stefanoleone992/imdb-extensive-dataset', unzip = True)
