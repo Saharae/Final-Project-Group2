@@ -53,7 +53,10 @@ def merge_and_clean_movies(movies, ratings, inflation):
     :param ratings: ratings dataset
     :return: cleaned movies dataset
     '''
-    movies['year'] = movies['year'].replace('TV Movie 2019', 2019)
+
+    # removing the TV movie row
+    todrop = movies[movies['year'] == 'TV Movie 2019'].index
+    movies.drop(todrop, axis = 0, inplace = True)
 
     # Merging Ratings and Movies (it merges perfectly)
     movies_full = movies.merge(ratings, on = 'imdb_title_id')
@@ -64,29 +67,42 @@ def merge_and_clean_movies(movies, ratings, inflation):
     # Renaming a misnamed column -- 'worlwide' to 'worldwide'
     movies_full.rename(columns = {'worlwide_gross_income' : 'worldwide_gross_income'}, inplace = True)
 
+
+    good_cols = ['duration', 'budget', 'worldwide_gross_income', 'usa_gross_income', 'title', 'date_published', 'genre',
+                 'country', 'director', 'writer', 'production_company', 'actors', 'weighted_average_vote', 'males_allages_avg_vote',
+                 'females_allages_votes', 'description', 'multiplier']
+
+    movies_clean = movies_full[good_cols].copy()
+
+    # datetime transformation for the date published
+    movies_clean['date_published'] = pd.to_datetime(movies_clean['date_published'])
+
     # cleaning the money columns
-    movies_full['budget'] = movies_full['budget'].apply(clean_money)
-    movies_full['usa_gross_income'] = movies_full['usa_gross_income'].apply(clean_money)
-    movies_full['worldwide_gross_income'] = movies_full['worldwide_gross_income'].apply(clean_money)
+    movies_clean.loc[:,'budget'] = movies_clean['budget'].apply(clean_money)
+    movies_clean.loc[:,'usa_gross_income'] = movies_clean['usa_gross_income'].apply(clean_money)
+    movies_clean.loc[:,'worldwide_gross_income'] = movies_clean['worldwide_gross_income'].apply(clean_money)
 
     # filling with 0s so we can apply the multiplier
-    movies_full['budget'] = movies_full['budget'].fillna(0)
-    movies_full['usa_gross_income'] = movies_full['usa_gross_income'].fillna(0)
-    movies_full['worldwide_gross_income'] = movies_full['worldwide_gross_income'].fillna(0)
+    movies_clean['budget'] = movies_clean['budget'].fillna(0)
+    movies_clean['usa_gross_income'] = movies_clean['usa_gross_income'].fillna(0)
+    movies_clean['worldwide_gross_income'] = movies_clean['worldwide_gross_income'].fillna(0)
 
     # adjusting to current day money
-    movies_full['budget_adjusted'] = movies_full['budget'] * movies_full['multiplier']
-    movies_full['usa_gross_income_adjusted'] = movies_full['usa_gross_income'] * movies_full['multiplier']
-    movies_full['worldwide_gross_income_adjusted'] = movies_full['worldwide_gross_income'] * movies_full['multiplier']
+    movies_clean['budget_adjusted'] = movies_clean['budget'] * movies_clean['multiplier']
+    movies_clean['usa_gross_income_adjusted'] = movies_clean['usa_gross_income'] * movies_clean['multiplier']
+    movies_clean['worldwide_gross_income_adjusted'] = movies_clean['worldwide_gross_income'] * movies_clean['multiplier']
 
     # making 3 new columns with each individual genre (columnn 1 is always populated, 2 and 3 get None if there's only 1 or 2 listed)
-    movies_full[['genre1', 'genre2', 'genre3']] = movies_full['genre'].str.split(', ', 2, expand = True)
+    movies_clean[['genre1', 'genre2', 'genre3']] = movies_clean['genre'].str.split(', ', 2, expand = True)
 
     # converting original genre column to a list
-    movies_full['genre'] = movies_full['genre'].str.split(', ')
-    movies_full['country'] = movies_full['country'].str.split(', ')
-    movies_full['primary_country'] = movies_full['country'].apply(get_primary_country)
-    return movies_full
+    movies_clean['genre'] = movies_clean['genre'].str.split(', ')
+    movies_clean['country'] = movies_clean['country'].str.split(', ')
+    movies_clean['primary_country'] = movies_clean['country'].apply(get_primary_country)
+
+    movies_clean.drop(['multiplier', 'budget', 'usa_gross_income', 'worldwide_gross_income'], axis = 1, inplace = True)
+
+    return movies_clean
 
 def US_movies(movies):
     '''
@@ -97,37 +113,56 @@ def US_movies(movies):
     us_movies = movies[movies['primary_country'] == 'USA']
     return us_movies
 
-def get_train_test(data, features, target, encode_target, test_size):
+def get_train_test_val(data, test_size = 0.3, val_size = 0.2):
     '''
     Performs the train test split
     :param data: dataframe to pull features and values from
-    :param features: list of columns to train on ex. ['genre', 'duration']
-    :param target: column to test ex. ['rating']
-    :param encode_target: does the target need to be encoded? boolean True or False
-    :param test_size: test size to split train test with, ex. 0.3
+    :param test_size: test size to split train test with, default -  0.3
+    :param val_size: test size to split train test with, default - 0.2
+
     :return:
-      feature_vals - the array of only the features
-      target_vals - the array of only the target vals (if encoded it will return the encoded vals)
-      X_train
-      X_test
-      y_train
-      y_test
+      df_train
+      df_val
+      df_test
     '''
-    feature_vals = data[features].values
-    target_vals = data[target].values
 
-    if encode_target:
-        le = LabelEncoder()
-        target_vals = le.fit_transform(target_vals)
+    df_train, df_test = train_test_split(data, test_size = test_size, random_state=100)
+    df_train, df_val = train_test_split(df_train, test_size = val_size, random_state = 100)
 
-    X_train, X_test, y_train, y_test = train_test_split(feature_vals, target_vals, test_size = test_size, random_state = 100)
-    return feature_vals, target_vals, X_train, X_test, y_train, y_test
+    return df_train, df_test, df_val
 
 
-ratings, movies, names, inflation = load_all(base)
-inflation_clean = clean_inflation(inflation)
-movies = merge_and_clean_movies(movies, ratings, inflation_clean)
+def expand_date(df, col_to_expand, keep_original = False):
 
-feature_vals, target_vals, X_train, X_test, y_train, y_test = get_train_test(movies, features = ['budget', 'country'], target = ['weighted_average_vote'], encode_target = False, test_size = 0.3)
+    df[col_to_expand+'_year'] = df[col_to_expand].dt.year
+    df[col_to_expand + '_month'] = df[col_to_expand].dt.month
+    df[col_to_expand + '_day'] = df[col_to_expand].dt.day
+
+    if not keep_original:
+        df.drop([col_to_expand], axis = 1, inplace = True)
+
+    return df
+
+def autobots_assemble(df):
+    '''
+    Transforms the data
+    :param df: data to transform
+    :return: transformed data lmao
+    '''
+
+    # DATE TRANSFORM
+    df = expand_date(df, col_to_expand = 'date_published', keep_original = False)
+
+    return df
+
+
+def preprocess():
+
+    ratings, movies, names, inflation = load_all(base)
+    inflation_clean = clean_inflation(inflation)
+    movies = merge_and_clean_movies(movies, ratings, inflation_clean)
+
+    df_train, df_test, df_val = get_train_test_val(movies)
+
 
 print('finished')
