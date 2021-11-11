@@ -35,6 +35,7 @@
 ## Topic Proposal
 * [Topic Proposal Google Doc](https://docs.google.com/document/d/1S1kVV3D69of6toTyy8Y6Jet_hQxWgXRaJ3Osm7h5Meo/edit?usp=sharing)
 * [Diagrams and Plan Slides](https://docs.google.com/presentation/d/1S9aHQ0wytiO6Fa-3G47gVMGUPqQ9GgL-u8SgExSSMzY/edit?usp=sharing)
+* [Features Selection Tracker](https://docs.google.com/spreadsheets/d/1qrFCjBWOn3emAx8xtMGC3bpg0CQsx3LMaK1O56ReDO0/edit?usp=sharing)
 
 # <a name="datasets"></a>
 ## Datasets
