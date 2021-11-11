@@ -4,6 +4,8 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 
 base = '/Users/sahara/Documents/GW/DataMining/Final-Project-Group2'
 
@@ -143,15 +145,31 @@ def expand_date(df, col_to_expand, keep_original = False):
 
     return df
 
-def autobots_assemble(df):
+def autobots_assemble(df_train, df_test, df_val, target):
     '''
     Transforms the data
     :param df: data to transform
     :return: transformed data lmao
     '''
 
+    # combine data for some transformations
+    df = pd.concat([df_train, df_val, df_test], sort = False)
+
     # DATE TRANSFORM
     df = expand_date(df, col_to_expand = 'date_published', keep_original = False)
+
+    # ENCODE CAT
+
+    # re-separate data
+    df_train = df.loc[df_train.index]
+    df_test = df.loc[df_test.index]
+    df_val = df.loc[df_val.index]
+
+    # impute
+
+    # separate targets from features
+
+    # standardize
 
     return df
 
