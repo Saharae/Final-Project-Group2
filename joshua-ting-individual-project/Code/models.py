@@ -20,7 +20,7 @@ current_path = get_repo_root()
 data_file = 'movies_data_for_model.csv'
 movies = Dataset(current_path + '/data/' + data_file)
 print(movies.get_dataset().columns)
-print(movies.get_dataset()['males_30age_avg_vote'])
+print(movies.get_dataset()['top1000_voters_votes'].unique())
 
 # Split train, val, test
 
