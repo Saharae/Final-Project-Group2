@@ -171,7 +171,7 @@ def autobots_assemble(df_train, df_test, df_val, target):
 
     # standardize
 
-    return df
+    return df_train, df_test, df_val
 
 
 def preprocess():
@@ -181,6 +181,8 @@ def preprocess():
     movies = merge_and_clean_movies(movies, ratings, inflation_clean)
 
     df_train, df_test, df_val = get_train_test_val(movies)
+    df_train, df_test, df_val = autobots_assemble(df_train, df_test, df_val, target = ['weighted_avg_vote'])
 
+    return df_train, df_test, df_val
 
-print('finished')
+df_train, df_test, df_val = preprocess()
