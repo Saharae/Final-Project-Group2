@@ -145,7 +145,7 @@ def expand_date(df, col_to_expand, keep_original = False):
 
     return df
 
-def autobots_assemble(df_train, df_test, df_val, target):
+def autobots_assemble(df_train, df_test, df_val, target = ''):
     '''
     Transforms the data
     :param df: data to transform
@@ -161,26 +161,33 @@ def autobots_assemble(df_train, df_test, df_val, target):
     # ENCODE CAT
 
     # re-separate data
-    df_train = df.loc[df_train.index]
-    df_test = df.loc[df_test.index]
-    df_val = df.loc[df_val.index]
+    df_train = df.loc[df_train.index].copy()
+    df_test = df.loc[df_test.index].copy()
+    df_val = df.loc[df_val.index].copy()
 
     # impute
 
-    # separate targets from features
+    # standardize --
+    ss = StandardScaler()
 
-    # standardize -- 
+    #numerical features until the cat is transformed
+    vars_to_standardize = np.array(df_train.columns.drop(['genre', 'genre1', 'genre2', 'genre3', 'primary_country', 'description', \
+                                                 'actors', 'title', 'country', 'director', 'writer', 'production_company']))
+    df_train.loc[:,vars_to_standardize] = ss.fit_transform(df_train[vars_to_standardize])
+    df_test.loc[:,vars_to_standardize] = ss.transform(df_test[vars_to_standardize])
+    df_val.loc[:,vars_to_standardize] = ss.transform(df_val[vars_to_standardize])
 
-    return df
+    return df_train, df_test, df_val
 
 
-def preprocess():
+def preprocess(test_size = 0.3, val_size = 0.2):
 
     ratings, movies, names, inflation = load_all(base)
     inflation_clean = clean_inflation(inflation)
     movies = merge_and_clean_movies(movies, ratings, inflation_clean)
 
-    df_train, df_test, df_val = get_train_test_val(movies)
+    df_train, df_test, df_val = get_train_test_val(movies, test_size = test_size, val_size = val_size)
+    df_train, df_test, df_val = autobots_assemble(df_train, df_test, df_val)
 
+    return df_train, df_test, df_val
 
-print('finished')
