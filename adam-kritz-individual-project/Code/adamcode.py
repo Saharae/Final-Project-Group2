@@ -297,4 +297,38 @@ def main():
 if __name__ == '__main__':
     main()
 
+# kaggle has its own package for downloading its stuff
+# i used pip and an .ipy file to download it in the script
 
+!pip install kaggle
+import pandas as pd
+import kaggle 
+import os
+
+def download():
+    
+
+    # dont push y if you dont wanna make you own working directiory
+    a = input('set a working directory to download to? (y/n)')
+
+    if a == 'y':
+        b = input('input working directory')
+        os.chdir(b)
+
+    # this is just my username and a key they generated for me
+    os.environ['KAGGLE_USERNAME'] = "adamkritz"
+    os.environ['KAGGLE_KEY'] = "05c2d7615e732897d1f9e6f75613ee41"
+    
+    kaggle.api.authenticate()
+    kaggle.api.dataset_download_files('stefanoleone992/imdb-extensive-dataset', unzip = True)
+    directory_path = os.getcwd()
+
+    ratings = pd.read_csv(directory_path + '/IMDb ratings.csv')
+    movies = pd.read_csv(directory_path + '/IMDb movies.csv')
+    names = pd.read_csv(directory_path + '/IMDb names.csv')
+    
+    return ratings, movies, names
+    
+download()
+
+# type ratings or something to see if it works
