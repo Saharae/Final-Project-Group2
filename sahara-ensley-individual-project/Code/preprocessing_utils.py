@@ -167,14 +167,12 @@ def autobots_assemble(df_train, df_test, df_val, target):
 
     # impute
 
-    # separate targets from features
-
-    # standardize
+    # standardize - make new columns for target, overwrite the others
 
     return df_train, df_test, df_val
 
 
-def preprocess():
+def preprocess(test_size = 0.3, val_size):
 
     ratings, movies, names, inflation = load_all(base)
     inflation_clean = clean_inflation(inflation)
