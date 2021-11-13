@@ -1,21 +1,45 @@
 import pandas as pd
 import numpy as np
 import seaborn as sns
+import os
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 
-base = '/Users/sahara/Documents/GW/DataMining/Final-Project-Group2'
+def get_repo_root():
+    '''
+    Function to get the repo base path of '.../Final-Project-Group2' so anyone can run.
+    
+    Paramaters
+    ----------
+    None
+
+    Return
+    ----------
+    None
+    '''
+    repo_name = 'Final-Project-Group2'
+    current_path = os.path.abspath(__file__)
+    current_path_list = current_path.split('/')
+    repo_index = current_path_list.index(repo_name)
+    current_path_list = current_path_list[:repo_index+1]
+    current_path = '/'.join(current_path_list)
+    
+    return current_path
+
+base = get_repo_root()
+# base = '/Users/sahara/Documents/GW/DataMining/Final-Project-Group2'
 
 def load_all(base):
     ratings = pd.read_csv(f'{base}/data/IMDb ratings.csv')
     movies = pd.read_csv(f'{base}/data/IMDb movies.csv')
     names = pd.read_csv(f'{base}/data/IMDb names.csv')
+    title_principals = pd.read_csv(f'{base}/data/IMDb title_principals.csv')
     inflation = pd.read_csv(f'{base}/data/CPIAUCNS_inflation.csv')
 
-    return ratings, movies, names, inflation
+    return ratings, movies, names, inflation, title_principals
 
 def clean_inflation(inflation):
     '''
@@ -72,8 +96,8 @@ def merge_and_clean_movies(movies, ratings, inflation):
 
     good_cols = ['duration', 'budget', 'worldwide_gross_income', 'usa_gross_income', 'title', 'date_published', 'genre',
                  'country', 'director', 'writer', 'production_company', 'actors', 'weighted_average_vote', 'males_allages_avg_vote',
-                 'females_allages_avg_vote', 'description', 'multiplier']
-
+                 'females_allages_avg_vote', 'description', 'multiplier', 'imdb_title_id']
+    
     movies_clean = movies_full[good_cols].copy()
 
     # datetime transformation for the date published
@@ -108,6 +132,187 @@ def merge_and_clean_movies(movies, ratings, inflation):
     movies_clean.drop(['multiplier', 'budget', 'usa_gross_income', 'worldwide_gross_income'], axis = 1, inplace = True)
 
     return movies_clean
+
+def merge_and_clean_names(names, title_principals):
+    '''
+    Function to merge and clean 'names' and 'title_principals' datasets to get the order of importance of each cast member in movie
+
+    Paramaters
+    ----------
+    names: names DF
+    title_principals: title_principals DF
+
+    Return
+    ----------
+    names_full: Merged and cleaned DF with ['imdb_name_id', 'name', 'ordering', 'imdb_title_id', 'category'] columns
+    '''
+    names_full = pd.merge(names, title_principals, on = ['imdb_name_id'])
+    names_full = names_full[['imdb_name_id', 'name', 'ordering', 'imdb_title_id', 'category']]
+
+    return names_full
+
+def fit_production_company_frequency():
+
+    return
+
+def transform_production_company_frequency():
+
+    return
+
+def binary_encode():
+
+    return
+
+def fit_weighted_popularity_casts(df_train, names):
+    '''
+    Function to fit frequencies of occurence per cast person from training data.
+    We will use a different transform function to actually perform the transformation.
+
+    Cast includes: actors, actresses, writers, and directors
+
+    Parameters
+    ----------
+    df_train: training dataset
+    names: names dataset
+
+    Return
+    -------
+    names: the 'fitted' names dataset on df_train. Fit in this case means finding the frequency of occurence per cast person in names.
+    '''
+    df_train['actors_split'] = df_train['actors'].str.split(',', expand=False)
+    cast_list = flatten([x for x in df_train['actors_split'].squeeze()])
+    cast_list = cast_list + df_train['director'].tolist()
+    cast_list = cast_list + df_train['writer'].tolist()
+
+    cast_names_set = set(cast_list)
+    total_unique_people = len(cast_names_set)
+    
+    cast_frequency_dict = dict()
+    for i in cast_list:
+        cast_frequency_dict[i] = cast_frequency_dict.get(i, 0) + 1
+
+    cast_frequency_dict = {person : count / total_unique_people for person, count in cast_frequency_dict.items()}
+
+    cast_frequency = pd.DataFrame({'name':cast_frequency_dict.keys(), 'frequency':cast_frequency_dict.values()})
+    
+    names = pd.merge(names, cast_frequency, on='name', how='left')
+
+    return names
+
+def transform_weighted_popularity_casts(df, popularity_fitted):
+    '''
+    Function to transform cast and crew to a popularity measure weighted by importance on role in movie.
+    
+    Any missing frequencies for cast occurence is imputed with the median of existing data. 
+    
+    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency. Regardless, we will treat these as the median of the fitted dataset. In other words, a new person our model hasn't seen before is treated with the median popularity/frequency of our dataset. 
+
+    Parameters
+    -----------
+    df: whole dataset
+    popularity_fitted: calculated frequencies from fitted training data
+
+    Return
+    ----------
+    df: transformed actors, directory, writer, and production company into encoded frequencies 
+    '''
+    popularity_fitted['frequency'] = popularity_fitted['frequency'].fillna(popularity_fitted['frequency'].median())
+    good_cols = ['imdb_title_id', 'imdb_name_id', 'category', 'ordering', 'frequency']
+
+    joined_df = pd.merge(popularity_fitted, df, on='imdb_title_id', how='left')
+    joined_df = joined_df[good_cols]
+
+    # Calc solution to ordering of importance weight. See function for more info
+    solution = solve_linear_transformation([[1,1],[2,1]], [10/10, 9/10])
+
+    # Calculate weighted frequency
+    joined_df['weighted_frequency'] = (joined_df['ordering'] * solution[0] + solution[1]) * joined_df['frequency']
+
+    # Actors
+    actors_df = joined_df.loc[(joined_df['category'] == 'actor') | (joined_df['category'] == 'actress')]
+    actors_df = actors_df.groupby(by=['imdb_title_id']).mean().reset_index()
+    actors_df = actors_df[['imdb_title_id', 'weighted_frequency']]
+
+    # Merge actors to df
+    df = pd.merge(df, actors_df, on='imdb_title_id', how='left')
+    df.drop(['actors'], axis=1, inplace=True)
+    df.rename(columns = {'weighted_frequency':'actors_weighted_frequency'}, inplace = True)
+
+    # Director
+    director_df = joined_df.loc[(joined_df['category'] == 'director')]
+    director_df = director_df.groupby(by=['imdb_title_id']).mean().reset_index()
+    director_df = director_df[['imdb_title_id', 'weighted_frequency']]
+
+    # Merge director to df
+    df = pd.merge(df, director_df, on='imdb_title_id', how='left')
+    df.drop(['director'], axis=1, inplace=True)
+    df.rename(columns = {'weighted_frequency':'director_weighted_frequency'}, inplace = True)
+
+    # Writer
+    writer_df = joined_df.loc[(joined_df['category'] == 'writer')]
+    writer_df = writer_df.groupby(by=['imdb_title_id']).mean().reset_index()
+    writer_df = writer_df[['imdb_title_id', 'weighted_frequency']]
+
+    # Merge writer to df
+    df = pd.merge(df, writer_df, on='imdb_title_id', how='left')
+    df.drop(['writer'], axis=1, inplace=True)
+    df.rename(columns = {'weighted_frequency':'writer_weighted_frequency'}, inplace = True)
+
+    # Checks
+    # print(len(df))
+    # print(len(df[~np.isnan(df['actors_weighted_frequency'])]))
+    # print(len(df[~np.isnan(df['director_weighted_frequency'])]))
+    # print(len(df[~np.isnan(df['writer_weighted_frequency'])]))
+    
+    return df
+
+def solve_linear_transformation(X, Y):
+    '''
+    Function to solve our transformation for weighted frequency of type:
+    
+    order * m + b = weight multiplier, where m and b's are slope and intercept of our linear transformation
+
+    ie: 1m + b = 10/10, 2m + b = 9/10, 3m + b = 8/10, ...., 10m + b = 1/10
+
+    Parameters
+    ----------
+    X: list of x values
+    Y: list of y values
+
+    Return
+    --------
+    solution: numpy array of solution
+    '''
+    X = np.array(X)
+    Y = np.array(Y)
+
+    solution = np.linalg.inv(X).dot(Y)
+    
+    return solution
+
+def flatten(list):
+    '''
+    Helper function to flatten a list of list
+
+    Parameters
+    ----------
+    list: some list of list
+
+    Return
+    ---------
+    dummy_list: flattened list
+
+    '''
+    dummy_list = []
+
+    for sublist in list:
+        # Try when sublist is a list so can iterate and get item except when np.nan and can't iterate.  
+        try:
+            for item in sublist:
+                dummy_list.append(item)
+        except TypeError:
+            continue
+    return dummy_list
 
 def US_movies(movies):
     '''
@@ -148,7 +353,7 @@ def expand_date(df, col_to_expand, keep_original = False):
 
     return df
 
-def autobots_assemble(df_train, df_test, df_val, target = ''):
+def autobots_assemble(df_train, df_test, df_val, names, target):
     '''
     Transforms the data
     :param df: data to transform
@@ -162,6 +367,12 @@ def autobots_assemble(df_train, df_test, df_val, target = ''):
     df = expand_date(df, col_to_expand = 'date_published', keep_original = False)
 
     # ENCODE CAT
+    # Encode popularity of cast and crew weighted by importance of role in movie
+    popularity_fitted = fit_weighted_popularity_casts(df_train, names)
+    df = transform_weighted_popularity_casts(df, popularity_fitted)
+
+    # Needed this id for getting frequencies, can drop after done.
+    df.drop('imdb_title_id', axis=1, inplace=True)
 
     # re-separate data
     df_train = df.loc[df_train.index].copy()
@@ -176,7 +387,8 @@ def autobots_assemble(df_train, df_test, df_val, target = ''):
 
     #numerical features until the cat is transformed
     vars_to_standardize = np.array(df_train.columns.drop(['genre', 'genre1', 'genre2', 'genre3', 'primary_country', 'description', \
-                                                 'actors', 'title', 'country', 'director', 'writer', 'production_company']))
+                                                 'actors_weighted_frequency', 'title', 'country', 'director_weighted_frequency', \
+                                                 'writer_weighted_frequency', 'production_company']))
     df_train.loc[:,vars_to_standardize] = ss.fit_transform(df_train[vars_to_standardize])
     df_test.loc[:,vars_to_standardize] = ss.transform(df_test[vars_to_standardize])
     df_val.loc[:,vars_to_standardize] = ss.transform(df_val[vars_to_standardize])
@@ -186,12 +398,13 @@ def autobots_assemble(df_train, df_test, df_val, target = ''):
 
 def preprocess(test_size = 0.3, val_size = 0.2):
 
-    ratings, movies, names, inflation = load_all(base)
+    ratings, movies, names, inflation, title_principals = load_all(base)
     inflation_clean = clean_inflation(inflation)
     movies = merge_and_clean_movies(movies, ratings, inflation_clean)
+    names = merge_and_clean_names(names, title_principals)
 
     df_train, df_test, df_val = get_train_test_val(movies, test_size = test_size, val_size = val_size)
-    df_train, df_test, df_val = autobots_assemble(df_train, df_test, df_val)
+    df_train, df_test, df_val = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
 
     return df_train, df_test, df_val
 
