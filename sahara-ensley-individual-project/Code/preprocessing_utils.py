@@ -61,19 +61,17 @@ def clean_inflation(inflation):
     inflation_simple = inflation.drop_duplicates(subset = 'year', keep = 'first')
     return inflation_simple
 
-def clean_money(x, country):
+def clean_money(money):
     '''
     Function to pass to a column in a pandas dataframe dealing with money
     finds the space after the $ and casts to an int
     :param x:
     :return:
     '''
-    if type(x) == float:
+    if type(money) == float:
         return np.nan
-    if country != 'USA':
-        return np.nan
-    white = x.find(' ')
-    trimmed = x[white+1:]
+    white = money.find(' ')
+    trimmed = money[white+1:]
     return int(trimmed)
 
 def get_primary_country(x):
@@ -131,7 +129,7 @@ def merge_and_clean_movies(movies, ratings, inflation):
     movies_full = movies.merge(ratings, on = 'imdb_title_id')
 
     # Merging movies and ratings with inflation to get the multiplier
-    movies_full = pd.merge(movies_full, inflation, on = ['year'])
+    movies_full = movies_full.merge(inflation, on = ['year'])
 
     # Renaming a misnamed column -- 'worlwide' to 'worldwide'
     movies_full.rename(columns = {'worlwide_gross_income' : 'worldwide_gross_income'}, inplace = True)
@@ -172,9 +170,10 @@ def merge_and_clean_movies(movies, ratings, inflation):
     # converting original genre column to a list
     movies_clean['genre'] = movies_clean['genre'].str.split(', ')
     movies_clean['country'] = movies_clean['country'].str.split(', ')
-    #movies_clean['language'] = movies_clean['language'].str.split(', ')
+
     movies_clean['primary_country'] = movies_clean['country'].apply(get_primary_country)
-    #movies_clean['primary_language'] = movies_clean['language'].apply(get_primary_country)
+    movies_clean[movies_clean['primary_country'] != 'USA'][['budget', 'usa_gross_income', 'worldwide_gross_income']] = np.nan
+
 
     movies_clean = to_region(movies_clean)
 
@@ -404,9 +403,10 @@ def expand_date(df, col_to_expand, keep_original = False):
 
 def get_missing(df):
     percent_missing = pd.DataFrame(df.isnull().sum() * 100 / len(df)).reset_index().rename(columns = {'index':'var', 0:'perc'})
-    percent_missing['dtype'] = percent_missing.apply(lambda x: df[x['var']].dtype, axis = 1)
+    percent_missing['dtype'] = percent_missing.apply(lambda x: str(df[x['var']].dtype), axis = 1)
     to_impute_num = percent_missing[(percent_missing['dtype'].isin(['int64', 'float64'])) & (percent_missing['perc'] > 0)]
     to_impute_cat = percent_missing[(~percent_missing['dtype'].isin(['int64', 'float64'])) & (percent_missing['perc'] > 0)]
+
     return to_impute_num, to_impute_cat
 
 def autobots_assemble(df_train, df_test, df_val, names, target):
