@@ -195,3 +195,4 @@ def preprocess(test_size = 0.3, val_size = 0.2):
 
     return df_train, df_test, df_val
 
+df_train, df_test, df_val = preprocess()
