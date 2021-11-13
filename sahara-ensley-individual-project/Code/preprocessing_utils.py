@@ -96,8 +96,8 @@ def merge_and_clean_movies(movies, ratings, inflation):
 
     good_cols = ['duration', 'budget', 'worldwide_gross_income', 'usa_gross_income', 'title', 'date_published', 'genre',
                  'country', 'director', 'writer', 'production_company', 'actors', 'weighted_average_vote', 'males_allages_avg_vote',
-                 'females_allages_votes', 'description', 'multiplier', 'imdb_title_id']
-
+                 'females_allages_avg_vote', 'description', 'multiplier', 'imdb_title_id']
+    
     movies_clean = movies_full[good_cols].copy()
 
     # datetime transformation for the date published
@@ -117,6 +117,9 @@ def merge_and_clean_movies(movies, ratings, inflation):
     movies_clean['budget_adjusted'] = movies_clean['budget'] * movies_clean['multiplier']
     movies_clean['usa_gross_income_adjusted'] = movies_clean['usa_gross_income'] * movies_clean['multiplier']
     movies_clean['worldwide_gross_income_adjusted'] = movies_clean['worldwide_gross_income'] * movies_clean['multiplier']
+
+    # putting the nans back in place of 0 for the money
+    movies_clean.replace(to_replace = 0, value = np.nan, inplace = True)
 
     # making 3 new columns with each individual genre (columnn 1 is always populated, 2 and 3 get None if there's only 1 or 2 listed)
     movies_clean[['genre1', 'genre2', 'genre3']] = movies_clean['genre'].str.split(', ', 2, expand = True)
@@ -377,6 +380,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df_val = df.loc[df_val.index].copy()
 
     # impute
+
 
     # standardize --
     ss = StandardScaler()
