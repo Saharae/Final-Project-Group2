@@ -11,7 +11,8 @@ from sklearn.impute import SimpleImputer
 def get_repo_root():
     '''
     Function to get the repo base path of '.../Final-Project-Group2' so anyone can run.
-    
+
+    Takes into account the case of running the code directly outside the repo.
     Paramaters
     ----------
     None
@@ -23,9 +24,15 @@ def get_repo_root():
     repo_name = 'Final-Project-Group2'
     current_path = os.path.abspath(__file__)
     current_path_list = current_path.split('/')
-    repo_index = current_path_list.index(repo_name)
+    try:
+        repo_index = current_path_list.index(repo_name)
+    except ValueError as err:
+        repo_index = -2
     current_path_list = current_path_list[:repo_index+1]
     current_path = '/'.join(current_path_list)
+
+    if 'Final-Project-Group2' not in current_path:
+        current_path+='/Final-Project-Group2'
     
     return current_path
 
@@ -54,23 +61,57 @@ def clean_inflation(inflation):
     inflation_simple = inflation.drop_duplicates(subset = 'year', keep = 'first')
     return inflation_simple
 
-def clean_money(x):
+def clean_money(money):
     '''
     Function to pass to a column in a pandas dataframe dealing with money
     finds the space after the $ and casts to an int
     :param x:
     :return:
     '''
-    if type(x) == float:
+    if type(money) == float:
         return np.nan
-    white = x.find(' ')
-    trimmed = x[white+1:]
+    white = money.find(' ')
+    trimmed = money[white+1:]
     return int(trimmed)
 
 def get_primary_country(x):
     if type(x) == float:
         return np.nan
-    return x[0]
+
+    country = x[0]
+    country_switch = {
+        'USA' : 'United States of America',
+        'UK' : 'United Kingdom of Great Britain and Northern Ireland',
+        'Russia': 'Russian Federation',
+        'Taiwan' : 'Taiwan, Province of China',
+        'Czech Republic' : 'Czechia',
+        'Vietnam' : 'Viet Nam',
+        'North Korea' : "Korea (Democratic People's Republic of)",
+        'South Korea' : 'Korea, Republic of',
+        'The Democratic Republic Of Congo':'Congo, Democratic Republic of the',
+        'Moldova' : 'Moldova, Republic of',
+        'Palestine': 'Palestine, State of',
+        'Bolivia':'Bolivia (Plurinational State of)',
+        'Syria' : 'Syrian Arab Republic',
+        'Venezuela':'Venezuela (Bolivarian Republic of)',
+        'Iran' : 'Iran (Islamic Republic of)',
+        'Isle Of Man' : 'Isle of Man',
+        'Republic of North Macedonia' : 'North Macedonia'
+    }
+    if country in country_switch.keys():
+        country = country_switch[country]
+
+    return country
+
+def to_region(df):
+    url = 'https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.csv'
+    regions = pd.read_csv(url)
+    regions = regions[['name', 'region']].copy()
+    regions.rename(columns = {'name':'primary_country'}, inplace = True)
+    df_full = df.merge(regions, on = 'primary_country', how = 'left')
+    df_full['region'] = df_full['region'].fillna('None')
+    return df_full
+
 
 def merge_and_clean_movies(movies, ratings, inflation):
     '''
@@ -88,7 +129,7 @@ def merge_and_clean_movies(movies, ratings, inflation):
     movies_full = movies.merge(ratings, on = 'imdb_title_id')
 
     # Merging movies and ratings with inflation to get the multiplier
-    movies_full = pd.merge(movies_full, inflation, on = ['year'])
+    movies_full = movies_full.merge(inflation, on = ['year'])
 
     # Renaming a misnamed column -- 'worlwide' to 'worldwide'
     movies_full.rename(columns = {'worlwide_gross_income' : 'worldwide_gross_income'}, inplace = True)
@@ -123,13 +164,20 @@ def merge_and_clean_movies(movies, ratings, inflation):
 
     # making 3 new columns with each individual genre (columnn 1 is always populated, 2 and 3 get None if there's only 1 or 2 listed)
     movies_clean[['genre1', 'genre2', 'genre3']] = movies_clean['genre'].str.split(', ', 2, expand = True)
+    movies_clean['genre2'] = movies_clean['genre2'].fillna('None')
+    movies_clean['genre3'] = movies_clean['genre3'].fillna('None')
 
     # converting original genre column to a list
     movies_clean['genre'] = movies_clean['genre'].str.split(', ')
     movies_clean['country'] = movies_clean['country'].str.split(', ')
-    movies_clean['primary_country'] = movies_clean['country'].apply(get_primary_country)
 
-    movies_clean.drop(['multiplier', 'budget', 'usa_gross_income', 'worldwide_gross_income'], axis = 1, inplace = True)
+    movies_clean['primary_country'] = movies_clean['country'].apply(get_primary_country)
+    movies_clean[movies_clean['primary_country'] != 'USA'][['budget', 'usa_gross_income', 'worldwide_gross_income']] = np.nan
+
+
+    movies_clean = to_region(movies_clean)
+
+    movies_clean.drop(['primary_country', 'country', 'multiplier', 'budget', 'usa_gross_income', 'worldwide_gross_income'], axis = 1, inplace = True)
 
     return movies_clean
 
@@ -353,6 +401,14 @@ def expand_date(df, col_to_expand, keep_original = False):
 
     return df
 
+def get_missing(df):
+    percent_missing = pd.DataFrame(df.isnull().sum() * 100 / len(df)).reset_index().rename(columns = {'index':'var', 0:'perc'})
+    percent_missing['dtype'] = percent_missing.apply(lambda x: str(df[x['var']].dtype), axis = 1)
+    to_impute_num = percent_missing[(percent_missing['dtype'].isin(['int64', 'float64'])) & (percent_missing['perc'] > 0)]
+    to_impute_cat = percent_missing[(~percent_missing['dtype'].isin(['int64', 'float64'])) & (percent_missing['perc'] > 0)]
+
+    return to_impute_num, to_impute_cat
+
 def autobots_assemble(df_train, df_test, df_val, names, target):
     '''
     Transforms the data
@@ -371,8 +427,13 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     popularity_fitted = fit_weighted_popularity_casts(df_train, names)
     df = transform_weighted_popularity_casts(df, popularity_fitted)
 
+    # One Hot Encode Region (should be 6 regions)
+    df = pd.get_dummies(df, columns = ['region'])
+
     # Needed this id for getting frequencies, can drop after done.
     df.drop('imdb_title_id', axis=1, inplace=True)
+
+    # transforming description
 
     # re-separate data
     df_train = df.loc[df_train.index].copy()
@@ -380,15 +441,20 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df_val = df.loc[df_val.index].copy()
 
     # impute
+    to_impute_num, to_impute_cat = get_missing(df)
+    imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+
+    df_train[to_impute_num['var']] = imp_mean.fit_transform(df_train[to_impute_num['var']])
+    df_test[to_impute_num['var']] = imp_mean.transform(df_test[to_impute_num['var']])
+    df_val[to_impute_num['var']] = imp_mean.transform(df_val[to_impute_num['var']])
 
 
     # standardize --
     ss = StandardScaler()
 
     #numerical features until the cat is transformed
-    vars_to_standardize = np.array(df_train.columns.drop(['genre', 'genre1', 'genre2', 'genre3', 'primary_country', 'description', \
-                                                 'actors_weighted_frequency', 'title', 'country', 'director_weighted_frequency', \
-                                                 'writer_weighted_frequency', 'production_company']))
+    vars_to_standardize = np.array(df_train.columns.drop(['genre', 'genre1', 'genre2', 'genre3', 'description', 'title', 'production_company']))
+
     df_train.loc[:,vars_to_standardize] = ss.fit_transform(df_train[vars_to_standardize])
     df_test.loc[:,vars_to_standardize] = ss.transform(df_test[vars_to_standardize])
     df_val.loc[:,vars_to_standardize] = ss.transform(df_val[vars_to_standardize])
@@ -409,3 +475,6 @@ def preprocess(test_size = 0.3, val_size = 0.2):
     return df_train, df_test, df_val
 
 df_train, df_test, df_val = preprocess()
+
+# just so I don't keep losing this line. delete later
+# percent_missing = df.isnull().sum() * 100 / len(df)
