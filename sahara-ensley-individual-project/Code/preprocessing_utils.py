@@ -296,6 +296,7 @@ def binary_encoder_transform(df, bin_df, col_name):
         df[col_name_i].fillna(float(none_i), inplace=True)
 
     df.drop(col_name, axis=1, inplace=True)
+    df.drop(['binary_code'], axis=1, inplace=True)
 
     return df
 
@@ -553,7 +554,7 @@ def ratio_interesting_characters(df, col_name):
     '''
     char = ['!', '?', '$', '#', '%', '*', '(', ')', '+']
     df['{}_ratio_char'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i in char])/len([i for i in x]) if isinstance(x, str) else 0)
-    print(df[[col_name, '{}_ratio_char'.format(col_name)]].head())
+    # print(df[[col_name, '{}_ratio_char'.format(col_name)]].head())
     return df
 
 def ratio_capital_letters(df, col_name):
@@ -569,7 +570,7 @@ def ratio_capital_letters(df, col_name):
     df: dataset transformed
     '''
     df['{}_ratio_capital_letters'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i.isupper()])/len([i for i in x]) if isinstance(x, str) else 0)
-    print(df[[col_name, '{}_ratio_capital_letters'.format(col_name)]].head())
+    # print(df[[col_name, '{}_ratio_capital_letters'.format(col_name)]].head())
     return df
 
 def US_movies(movies):
@@ -646,6 +647,8 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df = binary_encoder_transform(df, bin_df, col_name='genre1')
     df = binary_encoder_transform(df, bin_df, col_name='genre2')
     df = binary_encoder_transform(df, bin_df, col_name='genre3')
+    
+    df.drop(['genre'], axis = 1, inplace = True)
 
     # Encode title
     df = n_words(df, col_name='title')
@@ -686,7 +689,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     ss = StandardScaler()
 
     #numerical features until the cat is transformed
-    vars_to_standardize = np.array(df_train.columns.drop(['genre',]))
+    vars_to_standardize = np.array(df_train.columns.drop([]))
 
     df_train.loc[:,vars_to_standardize] = ss.fit_transform(df_train[vars_to_standardize])
     df_test.loc[:,vars_to_standardize] = ss.transform(df_test[vars_to_standardize])
@@ -707,6 +710,16 @@ def preprocess(test_size = 0.15, val_size = 0.15):
     return df_train, df_test, df_val
 
 df_train, df_test, df_val = preprocess()
+
+# Josh added these just to double check datasets, can delete once we're confident in dataset
+print(df_train.columns)
+print(len(df_train.columns))
+
+print(len(df_train))
+print(len(df_test))
+print(len(df_val))
+
+print(df_train.head())
 
 # just so I don't keep losing this line. delete later
 # percent_missing = df.isnull().sum() * 100 / len(df)
