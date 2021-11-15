@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import os
+import math
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -199,17 +200,151 @@ def merge_and_clean_names(names, title_principals):
 
     return names_full
 
-def fit_production_company_frequency():
+def fit_production_company_frequency(df_train):
+    '''
+    Function to calculate frequency of occurence for 'production_company' feature on training data.
+    This is the fit and will transform in another function on all (train, test, val) data.
 
-    return
+    Parameters
+    -----------
+    df_train: training dataset
 
-def transform_production_company_frequency():
+    Return
+    -----------
+    prod_comp_frequency: pandas df of frequency of 'production_company' column
+    '''
+    production_company_list = df_train['production_company'].tolist()
+    prod_comp_frequency = get_frequencies(production_company_list, 'production_company')
 
-    return
+    return prod_comp_frequency
 
-def binary_encode():
+def transform_production_company_frequency(df, production_company_fitted):
+    '''
+    Function to transform production_company categorical feature to a frequency sampling based numerical feature.
+    
+    Any missing frequencies occurence is imputed with the median of existing (training) data. 
+    
+    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency. 
+    Regardless, we will treat these as the median of the fitted dataset. In other words, a new production_company our model hasn't seen before is treated with the median popularity/frequency of our dataset. 
+    '''
+    production_company_fitted['frequency'] = production_company_fitted['frequency'].fillna(production_company_fitted['frequency'].median())
+    
+    df = pd.merge(df, production_company_fitted, on='production_company', how='left')
+    df.drop(['production_company'], axis=1, inplace=True)
+    df.rename(columns = {'frequency':'production_company_frequency'}, inplace = True)
 
-    return
+    return df
+
+def binary_encoder_fit(df_train, col_names):
+    '''
+    Function to fit binary encoder instead of using OHE to reduce dimensionality to log base 2.
+
+    Parameters
+    -----------
+    df_train: training dataset
+    col_names: column of names to fit in binary encoding. Only enter col names per similar feature groupings.
+        ie: [genre1, genre2, genre3] not [genre, country, title]. The second case will need to fit each feature then transform.
+
+    Return
+    -----------
+    bin_df: dataframe of binary codes per label
+    '''
+    col = []
+    for i in col_names:
+        col += df_train[i].tolist()
+    col.append('None')
+    col = set(col)
+
+    numbers = [i for i in range(len(col))]
+    col_map = {x:y for x,y in zip(col, numbers)}
+
+    dict_map_bin = binary_encoder(col_map)
+    
+    bin_df = pd.DataFrame({'label':dict_map_bin.keys(), 'binary_code':dict_map_bin.values()})
+
+    return bin_df
+
+def binary_encoder_transform(df, bin_df, col_name):
+    '''
+    Function to perform the transformation after fitting on binary_encoder_fit.
+
+    Parameter
+    ---------
+    df: dataset
+    bin_df: dataframe with binary encoding per label
+
+    Return
+    ---------
+    df: dataset with set 'col_name' as binary_encoded where n new columns = log_2(ceil(n of unique labels in col_name))
+    '''
+    bin_df_copy = bin_df.copy()
+    split_df = bin_df_copy['binary_code'].str.split('', expand=True)
+    split_df = split_df.iloc[:, 1:-1]
+    split_df = split_df.apply(pd.to_numeric)
+    
+    split_df.rename(columns=lambda x: "{}_{}".format(col_name,(x-1)+1), inplace=True)
+    bin_df_copy.rename(columns={'label':col_name}, inplace=True)
+
+    bin_df_copy = pd.concat([bin_df_copy, split_df], axis=1) 
+    df = pd.merge(df, bin_df_copy, on=col_name, how='left')
+    
+    # If missing, impute with 'None' binary encodings
+    none_encoding = bin_df_copy[bin_df_copy[col_name] == 'None']
+    for i in range(len(split_df.columns)):
+        col_name_i = '{}_{}'.format(col_name,i+1)
+        none_i = none_encoding[col_name_i]
+        df[col_name_i].fillna(float(none_i), inplace=True)
+
+    df.drop(col_name, axis=1, inplace=True)
+
+    return df
+
+def binary_encoder(dict_map):
+    '''
+    Function to take mapping dictionary where key = label, value = int category and encode the value to binary
+    on log base 2.
+
+    Parameter
+    ----------
+    dict_map: dictionary object where key = unique label, value = int category corresponding to label
+
+    Return
+    ----------
+    dict_map_bin: dictionary object where key = unique label, value = binarized string representation of int value
+    '''
+    num_bits = math.log(len(dict_map),2)
+    dict_map_bin = dict()
+
+    for key, value in dict_map.items():
+        dict_map_bin[key] = format(value, '0{}b'.format(math.ceil(num_bits)))
+
+    return dict_map_bin
+
+def get_frequencies(all_items_list, col_name):
+    '''
+    Function to calculate frequency of occurence of each item in a given list.
+
+    Parameters
+    ----------
+    all_items_list: a list with items of type str, but can work for types int, float, bool
+    col_name: str object to use as column name to represent items in list
+
+    Return
+    ----------
+    frequency_df: Pandas dataframe with column col_name and column 'frequency' of frequency of occurence within input list all_items_list
+    '''
+    unique_set = set(all_items_list)
+    total_unique_items = len(unique_set)
+    
+    items_frequency_dict = dict()
+    for i in all_items_list:
+        items_frequency_dict[i] = items_frequency_dict.get(i, 0) + 1
+
+    items_frequency_dict = {item : count / total_unique_items for item, count in items_frequency_dict.items()}
+
+    frequency_df = pd.DataFrame({str(col_name):items_frequency_dict.keys(), 'frequency':items_frequency_dict.values()})
+
+    return frequency_df 
 
 def fit_weighted_popularity_casts(df_train, names):
     '''
@@ -232,17 +367,8 @@ def fit_weighted_popularity_casts(df_train, names):
     cast_list = cast_list + df_train['director'].tolist()
     cast_list = cast_list + df_train['writer'].tolist()
 
-    cast_names_set = set(cast_list)
-    total_unique_people = len(cast_names_set)
-    
-    cast_frequency_dict = dict()
-    for i in cast_list:
-        cast_frequency_dict[i] = cast_frequency_dict.get(i, 0) + 1
+    cast_frequency = get_frequencies(cast_list, 'name')
 
-    cast_frequency_dict = {person : count / total_unique_people for person, count in cast_frequency_dict.items()}
-
-    cast_frequency = pd.DataFrame({'name':cast_frequency_dict.keys(), 'frequency':cast_frequency_dict.values()})
-    
     names = pd.merge(names, cast_frequency, on='name', how='left')
 
     return names
@@ -253,7 +379,8 @@ def transform_weighted_popularity_casts(df, popularity_fitted):
     
     Any missing frequencies for cast occurence is imputed with the median of existing data. 
     
-    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency. Regardless, we will treat these as the median of the fitted dataset. In other words, a new person our model hasn't seen before is treated with the median popularity/frequency of our dataset. 
+    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency. 
+    Regardless, we will treat these as the median of the fitted dataset. In other words, a new person our model hasn't seen before is treated with the median popularity/frequency of our dataset. 
 
     Parameters
     -----------
@@ -362,6 +489,89 @@ def flatten(list):
             continue
     return dummy_list
 
+def n_words(df, col_name):
+    '''
+    Function to get number of words in col_name
+
+    Parameter
+    ---------
+    df: dataset
+    col_name: column name to get number of words
+
+    Return
+    df: dataset transformed
+    '''
+    df['{}_n_words'.format(col_name)] = df[col_name].map(lambda x: len(x.split(' ')) if isinstance(x, str) else 0)
+    # print(df[[col_name, '{}_n_words'.format(col_name)]].head())
+    return df
+
+def ratio_long_words(df, col_name, n_letters):
+    '''
+    Function to get ratio of words over n_letters
+
+    Parameter
+    ---------
+    df: dataset
+    col_name: column name to get number of words
+    n_letters: int of number of letters over to calculate ratio
+
+    Return
+    df: dataset transformed
+    '''
+    df['{}_ratio_long_words'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x.split(' ') if len(i) > n_letters])/len(x.split(' ')) if isinstance(x, str) else 0)
+    # print(df[[col_name, '{}_ratio_long_words'.format(col_name)]].head())
+    return df
+
+def ratio_vowels(df, col_name):
+    '''
+    Function to get ratio of vowels in string
+
+    Parameter
+    ---------
+    df: dataset
+    col_name: column name to get number of words
+
+    Return
+    df: dataset transformed
+    '''
+    vowels = ['a', 'e', 'i', 'o', 'u']
+    df['{}_ratio_vowels'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i in vowels])/len([i for i in x]) if isinstance(x, str) else 0)
+    # print(df[[col_name, '{}_ratio_vowels'.format(col_name)]].head())
+    return df
+
+def ratio_interesting_characters(df, col_name):
+    '''
+    Function to get ratio of interesting characters in string
+
+    Parameter
+    ---------
+    df: dataset
+    col_name: column name to get number of words
+
+    Return
+    df: dataset transformed
+    '''
+    char = ['!', '?', '$', '#', '%', '*', '(', ')', '+']
+    df['{}_ratio_char'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i in char])/len([i for i in x]) if isinstance(x, str) else 0)
+    print(df[[col_name, '{}_ratio_char'.format(col_name)]].head())
+    return df
+
+def ratio_capital_letters(df, col_name):
+    '''
+    Function to get ratio of interesting characters in string
+
+    Parameter
+    ---------
+    df: dataset
+    col_name: column name to get number of words
+
+    Return
+    df: dataset transformed
+    '''
+    df['{}_ratio_capital_letters'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i.isupper()])/len([i for i in x]) if isinstance(x, str) else 0)
+    print(df[[col_name, '{}_ratio_capital_letters'.format(col_name)]].head())
+    return df
+
 def US_movies(movies):
     '''
     Separates out only the US movies by the country column
@@ -384,8 +594,8 @@ def get_train_test_val(data, test_size = 0.3, val_size = 0.2):
       df_test
     '''
 
-    df_train, df_test = train_test_split(data, test_size = test_size, random_state=100)
-    df_train, df_val = train_test_split(df_train, test_size = val_size, random_state = 100)
+    df_train, df_test = train_test_split(data, test_size = (test_size + val_size), random_state = 100)
+    df_test, df_val = train_test_split(df_test, test_size = val_size/(test_size + val_size), random_state = 100)
 
     return df_train, df_test, df_val
 
@@ -415,7 +625,6 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     :param df: data to transform
     :return: transformed data lmao
     '''
-
     # combine data for some transformations
     df = pd.concat([df_train, df_val, df_test], sort = False)
 
@@ -423,17 +632,42 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df = expand_date(df, col_to_expand = 'date_published', keep_original = False)
 
     # ENCODE CAT
+    
     # Encode popularity of cast and crew weighted by importance of role in movie
     popularity_fitted = fit_weighted_popularity_casts(df_train, names)
     df = transform_weighted_popularity_casts(df, popularity_fitted)
+    
+    # Encode production company
+    production_company_fitted = fit_production_company_frequency(df_train)
+    df = transform_production_company_frequency(df, production_company_fitted)
+    
+    # Encode genres
+    bin_df = binary_encoder_fit(df_train, ['genre1', 'genre2', 'genre3'])
+    df = binary_encoder_transform(df, bin_df, col_name='genre1')
+    df = binary_encoder_transform(df, bin_df, col_name='genre2')
+    df = binary_encoder_transform(df, bin_df, col_name='genre3')
+
+    # Encode title
+    df = n_words(df, col_name='title')
+    df = ratio_long_words(df, col_name='title', n_letters=4)
+    df = ratio_vowels(df, col_name='title')
+    df = ratio_capital_letters(df, col_name='title')
+
+    df.drop(['title'], axis = 1, inplace = True)
+
+    # Encode description
+    df = n_words(df, col_name='description')
+    df = ratio_long_words(df, col_name='description', n_letters=4)
+    df = ratio_vowels(df, col_name='description')
+    df = ratio_capital_letters(df, col_name='description')
+
+    df.drop(['description'], axis = 1, inplace = True)
 
     # One Hot Encode Region (should be 6 regions)
     df = pd.get_dummies(df, columns = ['region'])
 
     # Needed this id for getting frequencies, can drop after done.
     df.drop('imdb_title_id', axis=1, inplace=True)
-
-    # transforming description
 
     # re-separate data
     df_train = df.loc[df_train.index].copy()
@@ -448,12 +682,11 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df_test[to_impute_num['var']] = imp_mean.transform(df_test[to_impute_num['var']])
     df_val[to_impute_num['var']] = imp_mean.transform(df_val[to_impute_num['var']])
 
-
     # standardize --
     ss = StandardScaler()
 
     #numerical features until the cat is transformed
-    vars_to_standardize = np.array(df_train.columns.drop(['genre', 'genre1', 'genre2', 'genre3', 'description', 'title', 'production_company']))
+    vars_to_standardize = np.array(df_train.columns.drop(['genre',]))
 
     df_train.loc[:,vars_to_standardize] = ss.fit_transform(df_train[vars_to_standardize])
     df_test.loc[:,vars_to_standardize] = ss.transform(df_test[vars_to_standardize])
@@ -461,8 +694,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
 
     return df_train, df_test, df_val
 
-
-def preprocess(test_size = 0.3, val_size = 0.2):
+def preprocess(test_size = 0.15, val_size = 0.15):
 
     ratings, movies, names, inflation, title_principals = load_all(base)
     inflation_clean = clean_inflation(inflation)
