@@ -37,9 +37,6 @@ def get_repo_root():
     
     return current_path
 
-base = get_repo_root()
-# base = '/Users/sahara/Documents/GW/DataMining/Final-Project-Group2'
-
 def load_all(base):
     ratings = pd.read_csv(f'{base}/data/IMDb ratings.csv')
     movies = pd.read_csv(f'{base}/data/IMDb movies.csv')
@@ -700,7 +697,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     return df_train, df_test, df_val
 
 def preprocess(test_size = 0.15, val_size = 0.15):
-
+    base = get_repo_root()
     ratings, movies, names, inflation, title_principals = load_all(base)
     inflation_clean = clean_inflation(inflation)
     movies = merge_and_clean_movies(movies, ratings, inflation_clean)
@@ -711,17 +708,21 @@ def preprocess(test_size = 0.15, val_size = 0.15):
 
     return df_train, df_test, df_val
 
-df_train, df_test, df_val = preprocess()
+if __name__ == "__main__":
+    print('Executing', __name__)
+    df_train, df_test, df_val = preprocess()
 
-# Josh added these just to double check datasets, can delete once we're confident in dataset
-print(df_train.columns)
-print(len(df_train.columns))
+    # Josh added these just to double check datasets, can delete once we're confident in dataset
+    print(df_train.columns)
+    print(len(df_train.columns))
 
-print(len(df_train))
-print(len(df_test))
-print(len(df_val))
+    print(len(df_train))
+    print(len(df_test))
+    print(len(df_val))
 
-print(df_train.head())
+    print(df_train.head())
+else:
+    print('Importing:', __name__)
 
 # just so I don't keep losing this line. delete later
 # percent_missing = df.isnull().sum() * 100 / len(df)

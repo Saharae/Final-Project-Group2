@@ -15,12 +15,14 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+import preprocessing_utils as pre
 
 
 if __name__ == "__main__":
     # Run data download and setup
 
     # Data preprocessing
+    df_train, df_test, df_val = pre.preprocess()
 
     # EDA
 
@@ -28,6 +30,5 @@ if __name__ == "__main__":
 
 
     # GUI
-    pass
 
     
