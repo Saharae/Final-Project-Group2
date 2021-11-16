@@ -232,32 +232,37 @@ def transform_production_company_frequency(df, production_company_fitted):
 
     return df
 
-def binary_encoder_fit(df_train, col_names):
+def binary_encoder_fit(df_train, col_name):
     '''
     Function to fit binary encoder instead of using OHE to reduce dimensionality to log base 2.
 
     Parameters
     -----------
     df_train: training dataset
-    col_names: column of names to fit in binary encoding. Only enter col names per similar feature groupings.
-        ie: [genre1, genre2, genre3] not [genre, country, title]. The second case will need to fit each feature then transform.
+    col_name: column name
 
     Return
     -----------
     bin_df: dataframe of binary codes per label
     '''
-    col = []
-    for i in col_names:
-        col += df_train[i].tolist()
-    col.append('None')
-    col = set(col)
+    unique_data = [tuple(x) for x in set(tuple(sorted(x)) for x in df_train[col_name].to_list())]
+    unique_data.append(('None', 'None', 'None'))
 
-    numbers = [i for i in range(len(col))]
-    col_map = {x:y for x,y in zip(col, numbers)}
+    # col = []
+    # for i in col_names:
+    #     col += df_train[i].tolist()
+    # col.append('None')
+    # col = set(col)
 
-    dict_map_bin = binary_encoder(col_map)
+    numbers = [i for i in range(len(unique_data))]
+    unique_data_map = {x:y for x,y in zip(unique_data, numbers)}
+
+    dict_map_bin = binary_encoder(unique_data_map)
     
     bin_df = pd.DataFrame({'label':dict_map_bin.keys(), 'binary_code':dict_map_bin.values()})
+
+    bin_df['join_key'] = bin_df['label'].map(lambda x : [i for i in x])
+    bin_df['join_key'] = bin_df['join_key'].map(lambda x : ''.join(sorted(''.join(x))))
 
     return bin_df
 
@@ -282,18 +287,28 @@ def binary_encoder_transform(df, bin_df, col_name):
     split_df.rename(columns=lambda x: "{}_{}".format(col_name,(x-1)+1), inplace=True)
     bin_df_copy.rename(columns={'label':col_name}, inplace=True)
 
-    bin_df_copy = pd.concat([bin_df_copy, split_df], axis=1) 
-    df = pd.merge(df, bin_df_copy, on=col_name, how='left')
-    
+    bin_df_copy = pd.concat([bin_df_copy, split_df], axis=1)
+
+    df['join_key'] = df[col_name].map(lambda x : [i for i in x])
+    df['join_key'] = df['join_key'].map(lambda x : ''.join(sorted(''.join(x)))) 
+    df = pd.merge(df, bin_df_copy, on='join_key', how='left')
+
     # If missing, impute with 'None' binary encodings
-    none_encoding = bin_df_copy[bin_df_copy[col_name] == 'None']
+    none_encoding = bin_df_copy[bin_df_copy[col_name] == ('None','None','None')]
     for i in range(len(split_df.columns)):
         col_name_i = '{}_{}'.format(col_name,i+1)
         none_i = none_encoding[col_name_i]
         df[col_name_i].fillna(float(none_i), inplace=True)
 
-    df.drop(col_name, axis=1, inplace=True)
+    # Drop unnecessary columns
+    try:
+        df.drop(col_name, axis=1, inplace=True)
+    except KeyError:
+        df.drop('{}_x'.format(col_name), axis=1, inplace=True)
+        df.drop('{}_y'.format(col_name), axis=1, inplace=True)
+
     df.drop(['binary_code'], axis=1, inplace=True)
+    df.drop(['join_key'], axis=1, inplace=True)
 
     return df
 
@@ -640,12 +655,17 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df = transform_production_company_frequency(df, production_company_fitted)
     
     # Encode genres
-    bin_df = binary_encoder_fit(df_train, ['genre1', 'genre2', 'genre3'])
-    df = binary_encoder_transform(df, bin_df, col_name='genre1')
-    df = binary_encoder_transform(df, bin_df, col_name='genre2')
-    df = binary_encoder_transform(df, bin_df, col_name='genre3')
-    
-    df.drop(['genre'], axis = 1, inplace = True)
+    # bin_df = binary_encoder_fit(df_train, ['genre1', 'genre2', 'genre3'])
+    # df = binary_encoder_transform(df, bin_df, col_name='genre1')
+    # df = binary_encoder_transform(df, bin_df, col_name='genre2')
+    # df = binary_encoder_transform(df, bin_df, col_name='genre3')
+
+    bin_df = binary_encoder_fit(df_train, col_name='genre')
+    df = binary_encoder_transform(df, bin_df, col_name='genre')
+
+    df.drop(['genre1'], axis = 1, inplace = True)
+    df.drop(['genre2'], axis = 1, inplace = True)
+    df.drop(['genre3'], axis = 1, inplace = True)
 
     # Encode title
     df = n_words(df, col_name='title')
