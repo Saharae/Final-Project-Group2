@@ -705,16 +705,23 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df_val[to_impute_num['var']] = imp_mean.transform(df_val[to_impute_num['var']])
 
     # standardize --
-    ss = StandardScaler()
+    ss_features = StandardScaler()
+    ss_target = StandardScaler()
 
     #numerical features until the cat is transformed
-    vars_to_standardize = np.array(df_train.columns.drop([]))
+    vars_to_standardize = np.array(df_train.columns.drop(['weighted_average_vote']))
 
-    df_train.loc[:,vars_to_standardize] = ss.fit_transform(df_train[vars_to_standardize])
-    df_test.loc[:,vars_to_standardize] = ss.transform(df_test[vars_to_standardize])
-    df_val.loc[:,vars_to_standardize] = ss.transform(df_val[vars_to_standardize])
+    # Scale features
+    df_train.loc[:,vars_to_standardize] = ss_features.fit_transform(df_train[vars_to_standardize])
+    df_test.loc[:,vars_to_standardize] = ss_features.transform(df_test[vars_to_standardize])
+    df_val.loc[:,vars_to_standardize] = ss_features.transform(df_val[vars_to_standardize])
+    
+    # Scale target
+    df_train['weighted_average_vote'] = ss_target.fit_transform(df_train['weighted_average_vote'].values.reshape(-1,1)).reshape(-1).tolist()
+    df_test['weighted_average_vote'] = ss_target.transform(df_test['weighted_average_vote'].values.reshape(-1,1)).reshape(-1).tolist()
+    df_val['weighted_average_vote'] = ss_target.transform(df_val['weighted_average_vote'].values.reshape(-1,1)).reshape(-1).tolist()
 
-    return df_train, df_test, df_val
+    return df_train, df_test, df_val, ss_target
 
 def preprocess(test_size = 0.15, val_size = 0.15):
     base = get_repo_root()
@@ -724,9 +731,9 @@ def preprocess(test_size = 0.15, val_size = 0.15):
     names = merge_and_clean_names(names, title_principals)
 
     df_train, df_test, df_val = get_train_test_val(movies, test_size = test_size, val_size = val_size)
-    df_train, df_test, df_val = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
+    df_train, df_test, df_val, ss_target = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
 
-    return df_train, df_test, df_val
+    return df_train, df_test, df_val, ss_target
 
 if __name__ == "__main__":
     print('Executing', __name__)
