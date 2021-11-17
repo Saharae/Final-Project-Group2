@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import os
 import math
 
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, SGDRegressor
 from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor
 from sklearn.metrics import mean_squared_error
 
@@ -89,6 +89,24 @@ class Dataset:
 
         return
 
+    def get_data_as_arrays(self):
+        '''
+        Method to return data as np arrays
+        
+        Parameters
+            self: instance of object
+        
+        Return
+            self.train_X: training X values
+            self.test_X: testing X values
+            self.val_X: validation X values
+            self.train_Y: training Y values
+            self.test_Y: testing Y values
+            self.val_Y: validation Y values
+
+        '''
+        return self.train_X, self.test_X, self.val_X, self.train_Y,  self.test_Y, self.val_Y
+
     def most_important_features_analysis(self, show=False):
         '''
         Method to perform analysis to get most important features using a very basic RandomForest.
@@ -141,11 +159,47 @@ class Dataset:
         return self.feature_importance
     
     def use_most_important_features(self, top_n):
+        '''
+        Method to choose top n most important features to use from most_important_features_analysis.
+        Sets self.
+
+        Parameters
+            self: instance of object
+        
+        Return
+            self.feature_importance: dataframe of feature importance by feature
+        '''
 
         return
 
 class Model:
-    def __init__(self):
+    def __init__(self, train_x, train_y, val_x, val_y, test_x, test_y=None, name=None, target_scaler=None):
+        '''
+        Init method for Model parent class
+
+        Parameters
+            self: instance of object
+            train_X: training X values
+            test_X: testing X values
+            val_X: validation X values
+            train_Y: training Y values
+            test_Y: testing Y values
+            val_Y: validation Y values
+            name: nickname (str) for model
+            target_scaler: sklearn scaler object used in preprocessing to scale target data
+
+        Return
+            None   
+        '''
+        self.train_x = train_x
+        self.train_y = train_y
+        self.val_x = val_x
+        self.val_y = val_y
+        self.test_x = test_x
+        self.test_y = test_y
+        self.name = name
+        self.scaler = target_scaler
+
         return
 
     def save_model(self):
@@ -161,26 +215,136 @@ class Model:
         return
 
     def train(self):
+        self.model.fit(self.train_x, self.train_y)
         return
 
-class LinearRegression(Model):
-    def __init__(self):
+    def get_val_score(self):
+        '''
+        Method to get score for this estimator
+        '''
+        self.val_score = self.model.score(self.val_x, self.val_y)
+        print(self.val_score)
+        return self.val_score   
+
+    def get_params(self):
+        '''
+        Method to get parameters for this estimator
+        '''
+        print(self.model.get_params())
+        return self.model.get_params()
+
+    def get_model_nickname(self):
+        '''
+        Method to return the model nickname assigned during object instantiation
+
+        Parameters
+            self: instance of object
+        
+        Return
+            self.name: nickname (str) for model
+        '''
+        print('Model: ', self.name)
+        return self.name
+
+    def get_model(self):
+        '''
+        Method to return the model for object
+
+        Parameters
+            self: instance of object
+        
+        Return
+            self.model: sklearn model object
+        '''
+        print(self.model)
+        return self.model
+
+    def construct_model(self, model):
+        '''
+        Method to construct model (instantiate sklearn model)
+
+        Parameters
+            self: instance of object
+            model: of type sklearn model, ie: model = LinearRegression()
+        
+        Return
+            None
+        '''
+        self.model = model
         return
+
+    def set_score(self, score):
+        '''
+        Method to set the score used for this model
+
+        Parameters
+            self: instance of object
+            score: score used for model
+        
+        Return
+            None
+        '''
+        self.score = score
+        return
+
+    def get_error_in_context(self):
+        '''
+        Method to get the error of model in context to target 
+
+        Parameters
+            self: instance of object
+        
+        Return
+            self.rmse: calculate RMSE after inverse scaling transformation
+            self.mse_val: calculate MSE after inverse scaling transformation
+        '''
+        self.val_y_predict = self.model.predict(self.val_x)
+
+        self.inv_val_y_predict = self.scaler.inverse_transform(self.val_y_predict.reshape(-1,1))
+        self.inv_val_y = self.scaler.inverse_transform(self.val_y.reshape(-1,1))
+
+        self.mse_val = mean_squared_error(self.inv_val_y, self.inv_val_y_predict)
+
+        self.rmse = np.sqrt(self.mse_val)
+        print('RMSE for {}: {}'.format(self.name, self.rmse))
+        print('MSE for {}: {}'.format(self.name, self.mse_val))
+        return self.rmse, self.mse_val
+
+
+# class LinearRegressionModel(Model):
+#     def __init__(self, train_x, train_y, val_x, val_y, test_x, test_y, name):
+#         '''
+#         Init method for Model parent class
+
+#         Parameters
+#             self: instance of object
+#             train_X: training X values
+#             test_X: testing X values
+#             val_X: validation X values
+#             train_Y: training Y values
+#             test_Y: testing Y values
+#             val_Y: validation Y values
+#             name: nickname (str) for model
+
+#         Return
+#             None        
+#         '''
+#         super().__init__(train_x, train_y, val_x, val_y, test_x, test_y)
+#         self.name = name + '-LinearRegression'
+#         return
     
-    def construct_model(self):
-        return
 
-class RandomForest(Model):
-    def __init__(self):
-        return
+# class RandomForestModel(Model):
+#     def __init__(self):
+#         return
 
-class GradientBoost(Model):
-    def __init__(self):
-        return
+# class GradientBoostModel(Model):
+#     def __init__(self):
+#         return
 
-class AdaBoost(Model):
-    def __init__(self):
-        return        
+# class AdaBoostModel(Model):
+#     def __init__(self):
+#         return        
 
 if __name__ == "__main__":
     print('Executing', __name__)
