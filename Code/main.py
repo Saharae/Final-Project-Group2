@@ -25,13 +25,13 @@ if __name__ == "__main__":
 
     # Data preprocessing
     print('Doing preprocessing...')
-    df_train, df_test, df_val, ss = pre.preprocess()
+    df_train, df_test, df_val, ss_target = pre.preprocess()
 
     # EDA
 
     # Modeling
     print('Doing modeling...')
-    mdl.run_modeling_wrapper(df_train, df_test, df_val, ss)
+    mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target)
 
 
     # GUI

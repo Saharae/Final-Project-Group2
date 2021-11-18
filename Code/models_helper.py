@@ -9,7 +9,7 @@ import math
 from sklearn.linear_model import LinearRegression, SGDRegressor
 from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor
 from sklearn.metrics import mean_squared_error
-
+from sklearn.model_selection import PredefinedSplit, GridSearchCV, validation_curve, learning_curve
 class Dataset:
     def __init__(self, train_df, test_df, val_df, random_seed, label):
         '''
@@ -179,10 +179,33 @@ class Dataset:
         self.data_as_arrays()
         return
 
-class Model:
-    def __init__(self, random_seed, train_x, train_y, val_x, val_y, test_x, test_y=None, name=None, target_scaler=None):
+    def get_train_val_predefined_split(self):
         '''
-        Init method for Model parent class
+        Method to combine train and validation dataset into one and set predefined split for CV
+
+        Parameters:
+            self: instance of object
+
+        Return:
+            self.X_train_val: Combined train and val dataset X
+            self.Y_train_val: Combined train and val dataset Y
+            self.test_X: Test dataset X
+            self.test_Y: Test dataset Y
+            self.ps: predefined split for CV
+        '''
+        self.X_train_val = np.vstack((self.train_X, self.val_X))
+        self.Y_train_val = np.vstack((self.train_Y.reshape(-1,1), self.val_Y.reshape(-1,1))).reshape(-1)
+
+        # Get indexes of training and validation: -1 means not be used in CV
+        self.train_val_idxs = np.append(np.full(self.train_X.shape[0], -1), np.full(self.val_X.shape[0], 0))
+        self.ps = PredefinedSplit(self.train_val_idxs)
+
+        return self.X_train_val, self.Y_train_val, self.test_X, self.test_Y, self.ps
+
+class Model:
+    def __init__(self, random_seed, train_x, train_y, val_x=None, val_y=None, test_x=None, test_y=None, name=None, target_scaler=None):
+        '''
+        Init method for Model class
 
         Parameters
             self: instance of object
@@ -195,6 +218,7 @@ class Model:
             val_Y: validation Y values
             name: nickname (str) for model
             target_scaler: sklearn scaler object used in preprocessing to scale target data
+            ps: predefined split for training and validation
 
         Return
             None   
@@ -342,6 +366,80 @@ class Model:
         print('RMSE for {}: {}'.format(self.name, self.rmse))
         print('MSE for {}: {}'.format(self.name, self.mse_val))
         return self.rmse, self.mse_val
+
+    def set_params_to_tune(self, params_dict):
+        '''
+        Method to set the paramaters to tune for model
+
+        Parameters
+            self: instance of object
+            params_dict: dict of param as key and list of values to try as list
+
+        Return
+            None
+        '''
+        self.params_dict = params_dict
+
+class ModelTuner(Model):
+    def __init__(self, random_seed, train_x, train_y, test_x=None, test_y=None, name=None, target_scaler=None, ps=None, models_pipe=None, params=None):
+        '''
+        Init method for ModelTuner, child of Model
+
+        Parameters
+            self: instance of object
+            random_seed: random_seed integer number
+            train_X: training X values, can include val data if provided ps
+            test_X: testing X values
+            train_Y: training Y values, can include val data if provided ps
+            test_Y: testing Y values
+            name: nickname (str) for model
+            target_scaler: sklearn scaler object used in preprocessing to scale target data
+            ps: predefined split for training and validation
+            models_pipe: Pipeline of models
+            params: parameter grids for gridsearchCV, dict of {modelname, [param dict]}
+
+        Return
+            None   
+        '''
+        super().__init__(random_seed, train_x, train_y, test_x=test_x, test_y=test_y, name=name, target_scaler=target_scaler)
+
+        self.ps = ps
+        self.models_pipe = models_pipe
+        self.params = params
+        return
+    
+    def do_gridsearchcv(self):
+
+        for model in self.models_pipe.keys():
+
+            gs = GridSearchCV(estimator=self.models_pipe[model], 
+                              param_grid=self.params[model], 
+                              scoring='neg_mean_squared_error', 
+                              n_jobs=2, 
+                              cv=self.ps, 
+                              return_train_score=True, 
+                              verbose=3)
+            
+            gs.fit(self.train_x, self.train_y)
+
+            cv_results = gs.cv_results_
+            print(gs.best_score_, gs.best_params_, gs.best_estimator_)
+            print(cv_results)
+
+            for param in self.params[model][0].keys():
+                train_scores, valid_scores = validation_curve(self.models_pipe[model], 
+                                                              self.train_x, 
+                                                              self.train_y, 
+                                                              param_name=param,
+                                                              param_range=self.params[model][0][param],
+                                                              cv=self.ps)
+
+                print('validation curve for {}'.format(param), train_scores, valid_scores)
+
+            train_sizes, train_scores, valid_scores = learning_curve(self.models_pipe[model], self.train_x, self.train_y, train_sizes=[10,25,50], cv=self.ps)
+            print('learning curve for {}'.format(model), train_sizes, train_scores, valid_scores)
+
+        return
 
 class Plotter:
     def __init__(self, path, name, savename):
