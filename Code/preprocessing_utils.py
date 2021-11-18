@@ -68,6 +68,8 @@ def clean_money(money):
     '''
     if type(money) == float:
         return np.nan
+    if money[0]!='$':
+        return np.nan
     white = money.find(' ')
     trimmed = money[white+1:]
     return int(trimmed)
@@ -170,8 +172,6 @@ def merge_and_clean_movies(movies, ratings, inflation):
     movies_clean['country'] = movies_clean['country'].str.split(', ')
 
     movies_clean['primary_country'] = movies_clean['country'].apply(get_primary_country)
-    movies_clean[movies_clean['primary_country'] != 'USA'][['budget', 'usa_gross_income', 'worldwide_gross_income']] = np.nan
-
 
     movies_clean = to_region(movies_clean)
 
