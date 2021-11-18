@@ -70,6 +70,17 @@ class AdaBoost(Model):
         return        
 
 def get_repo_root():
+    '''
+    Function to get the repo base path of '.../Final-Project-Group2' so anyone can run.
+    
+    Paramaters
+    ----------
+    None
+
+    Return
+    ----------
+    None
+    '''
     repo_name = 'Final-Project-Group2'
     current_path = os.path.abspath(__file__)
     current_path_list = current_path.split('/')
