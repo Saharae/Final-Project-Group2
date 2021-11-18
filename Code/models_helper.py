@@ -165,20 +165,28 @@ class Dataset:
 
         Parameters
             self: instance of object
+            top_n: top number of features to use
         
         Return
-            self.feature_importance: dataframe of feature importance by feature
+            None
         '''
+        features_to_use = self.feature_importance['Features'].head(top_n).to_list()
 
+        self.train_df_X = self.train_df_X[features_to_use]
+        self.test_df_X = self.test_df_X[features_to_use]
+        self.val_df_X = self.val_df_X[features_to_use]
+
+        self.data_as_arrays()
         return
 
 class Model:
-    def __init__(self, train_x, train_y, val_x, val_y, test_x, test_y=None, name=None, target_scaler=None):
+    def __init__(self, random_seed, train_x, train_y, val_x, val_y, test_x, test_y=None, name=None, target_scaler=None):
         '''
         Init method for Model parent class
 
         Parameters
             self: instance of object
+            random_seed: random_seed integer number
             train_X: training X values
             test_X: testing X values
             val_X: validation X values
@@ -191,6 +199,7 @@ class Model:
         Return
             None   
         '''
+        self.random_seed = random_seed
         self.train_x = train_x
         self.train_y = train_y
         self.val_x = val_x
@@ -215,12 +224,31 @@ class Model:
         return
 
     def train(self):
+        '''
+        Method to train model
+
+        Parameters
+            self: instance of object
+        
+        Return
+            None
+        '''
+        # Set model's random state if param available
+        if 'random_state' in self.model.get_params().keys():
+            self.model.set_params(random_state=self.random_seed)
+
+        # Train
         self.model.fit(self.train_x, self.train_y)
         return
 
     def get_val_score(self):
         '''
         Method to get score for this estimator
+        Parameters
+            self: instance of object
+        
+        Return
+            self.val_score: validation score of model
         '''
         self.val_score = self.model.score(self.val_x, self.val_y)
         print(self.val_score)
@@ -229,6 +257,11 @@ class Model:
     def get_params(self):
         '''
         Method to get parameters for this estimator
+        Parameters
+            self: instance of object
+        
+        Return
+            self.model.get_params(): dictionary of paramaters and default values
         '''
         print(self.model.get_params())
         return self.model.get_params()
@@ -310,41 +343,82 @@ class Model:
         print('MSE for {}: {}'.format(self.name, self.mse_val))
         return self.rmse, self.mse_val
 
+class Plotter:
+    def __init__(self, path, name, savename):
+        '''
+        Init method for Plotter
 
-# class LinearRegressionModel(Model):
-#     def __init__(self, train_x, train_y, val_x, val_y, test_x, test_y, name):
-#         '''
-#         Init method for Model parent class
+        Parameters:
+            path: path to save plots to
+            name: title of plots
+            savename: str to save files to
+        
+        Return:
+            None
+        '''
+        self.path = path
+        self.name = name
+        self.savename = savename
 
-#         Parameters
-#             self: instance of object
-#             train_X: training X values
-#             test_X: testing X values
-#             val_X: validation X values
-#             train_Y: training Y values
-#             test_Y: testing Y values
-#             val_Y: validation Y values
-#             name: nickname (str) for model
-
-#         Return
-#             None        
-#         '''
-#         super().__init__(train_x, train_y, val_x, val_y, test_x, test_y)
-#         self.name = name + '-LinearRegression'
-#         return
+        self.make_directory()
+        return
     
+    def model_comparison(self, score_dict, score, saveplot=True, show=False, alt=0):
+        '''
+        Method to plot a bar chart of models' avg scores
 
-# class RandomForestModel(Model):
-#     def __init__(self):
-#         return
+        Parameters
+            self: instance of object
+            score_dict: dict of scores {model:score}
+            score: score name for ylabel, str
+            saveplot: default True, boolean to save plot or not
 
-# class GradientBoostModel(Model):
-#     def __init__(self):
-#         return
+        Return
+            None
+        '''
+        models = list(score_dict.keys())
+        scores = list(score_dict.values())
 
-# class AdaBoostModel(Model):
-#     def __init__(self):
-#         return        
+        plt.figure(figsize = (10,5))
+        plt.bar(models, scores, color = 'tab:orange', width = 0.4)
+        plt.xlabel("Models")
+        plt.ylabel(score)
+        plt.title('Model Performance: ' + self.name)
+            
+        if saveplot:
+            if alt == 0:
+                plt.savefig(self.path + 'model_comparison' + '_' + self.savename + '.png')
+            else:
+                plt.savefig(self.path + 'model_comparison' + '_' + self.savename + str(alt) + '.png')
+        
+        if show:
+            plt.show()
+        
+        return
+
+    def learning_curves(self):
+
+        return
+
+    def validation_curves(self):
+
+        return
+    
+    def make_directory(self):
+        '''
+        Helper method to make directory path if not created
+
+        Parameters
+            self: instance of object
+            path: path of directory
+
+        Return
+            None
+        '''
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+        return
+
 
 if __name__ == "__main__":
     print('Executing', __name__)

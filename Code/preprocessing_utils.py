@@ -248,12 +248,6 @@ def binary_encoder_fit(df_train, col_name):
     unique_data = [tuple(x) for x in set(tuple(sorted(x)) for x in df_train[col_name].to_list())]
     unique_data.append(('None', 'None', 'None'))
 
-    # col = []
-    # for i in col_names:
-    #     col += df_train[i].tolist()
-    # col.append('None')
-    # col = set(col)
-
     numbers = [i for i in range(len(unique_data))]
     unique_data_map = {x:y for x,y in zip(unique_data, numbers)}
 
