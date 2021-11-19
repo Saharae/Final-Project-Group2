@@ -25,15 +25,9 @@ from PyQt5.QtWidgets import QMessageBox
 
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import Qt  # Control status
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import  QWidget,QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
 
-
-from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QApplication
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMessageBox 
-from PyQt5.QtWidgets import QCheckBox  
-from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QSize 
 
 
