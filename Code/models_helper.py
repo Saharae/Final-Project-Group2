@@ -1,10 +1,10 @@
 # This file contains the models that we used for our dataset
-
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import os
 import math
+import pickle
 
 from sklearn.linear_model import LinearRegression, SGDRegressor
 from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor
@@ -137,12 +137,6 @@ class Dataset:
             plt.tight_layout()
             plt.show()
 
-        # print('Score: %.2f' % basic_random_forest.score(self.val_X, self.val_Y, sample_weight=None))
-        # print(basic_random_forest.score(self.val_X, self.val_Y))
-
-        # y_predict = basic_random_forest.predict(self.val_X)
-        # print('Loss: ', mean_squared_error(self.val_Y, y_predict), math.sqrt(mean_squared_error(self.val_Y, y_predict))/(self.val_Y.max() - self.val_Y.min()))
-
         return
     
     def get_most_important_features(self):
@@ -235,16 +229,55 @@ class Model:
 
         return
 
-    def save_model(self):
+    def save_model(self, filename):
+        '''
+        Method to save object model
 
+        Parameters
+            self: instance of obejct
+            model_name: model name to save
+
+        Return
+            None
+        '''
+        with open(filename, 'wb') as file:
+            pickle.dump(self.model, file)
+
+        print('Saved model: {}, {}'.format(self.name, self.model))
         return
     
-    def load_model(self):
+    def load_model(self, filename):
+        '''
+        Method to load object model
 
-        return
+        Parameters
+            self: instance of obejct
+            filename: filename to open
+
+        Return
+            self.model: model object
+        '''
+        with open(filename, 'rb') as file:
+            self.model = pickle.load(file)
+
+        print('Loaded model: {}, {}'.format(self.name, self.model))
+
+        return self.model
     
-    def predict(self):
+    def evaluate(self, test_x=[]):
+        '''
+        Method to evaluate model on test data
 
+        Parameters
+            self: instance of obejct
+
+        Return
+            self.model: model object
+        '''
+        if len(test_x) > 0:
+            self.test_x = test_x
+
+        self.test_y_predict = self.model.predict(self.test_x)
         return
 
     def train(self):
@@ -344,17 +377,23 @@ class Model:
         self.score = score
         return
 
-    def get_error_in_context(self):
+    def get_error_in_context(self, val_x=[], val_y=[]):
         '''
         Method to get the error of model in context to target 
 
         Parameters
             self: instance of object
+            val_x: test/validation features, default None to default to self.val_x
+            val_y: test/validation target, default None to default to self.val_y
         
         Return
             self.rmse: calculate RMSE after inverse scaling transformation
             self.mse_val: calculate MSE after inverse scaling transformation
         '''
+        if len(val_x) > 0:
+            self.val_x = val_x
+            self.val_y = val_y
+
         self.val_y_predict = self.model.predict(self.val_x)
 
         self.inv_val_y_predict = self.scaler.inverse_transform(self.val_y_predict.reshape(-1,1))
@@ -367,9 +406,35 @@ class Model:
         print('MSE for {}: {}'.format(self.name, self.mse_val))
         return self.rmse, self.mse_val
 
+    def get_error(self, val_x=[], val_y=[]):
+        '''
+        Method to get the error of model 
+
+        Parameters
+            self: instance of object
+            val_x: test/validation features, default None to default to self.val_x
+            val_y: test/validation target, default None to default to self.val_y
+        
+        Return
+            self.rmse: calculate RMSE 
+            self.mse_val: calculate MSE
+        '''
+        if len(val_x) > 0:
+            self.val_x = val_x
+            self.val_y = val_y
+        
+        self.val_y_predict = self.model.predict(self.val_x)
+
+        self.mse_val = mean_squared_error(self.val_y, self.val_y_predict)
+
+        self.rmse = np.sqrt(self.mse_val)
+        print('RMSE for {}: {}'.format(self.name, self.rmse))
+        print('MSE for {}: {}'.format(self.name, self.mse_val))
+        return self.rmse, self.mse_val
+
     def set_params_to_tune(self, params_dict):
         '''
-        Method to set the paramaters to tune for model
+        Method to set the paramaters to test for tuning the model
 
         Parameters
             self: instance of object
@@ -380,13 +445,27 @@ class Model:
         '''
         self.params_dict = params_dict
 
+    def set_params(self, params_dict):
+        '''
+        Method to set parameters to model
+
+        Parameters
+            self: instance of object
+            params_dict: dict of param as key and list of values to try as list
+
+        Return
+            None
+        '''
+        self.model.set_params(**params_dict)
+
 class ModelTuner(Model):
-    def __init__(self, random_seed, train_x, train_y, test_x=None, test_y=None, name=None, target_scaler=None, ps=None, models_pipe=None, params=None):
+    def __init__(self, path, random_seed, train_x, train_y, test_x=None, test_y=None, name=None, target_scaler=None, ps=None, models_pipe=None, params=None):
         '''
         Init method for ModelTuner, child of Model
 
         Parameters
             self: instance of object
+            path: path to save results to
             random_seed: random_seed integer number
             train_X: training X values, can include val data if provided ps
             test_X: testing X values
@@ -403,44 +482,113 @@ class ModelTuner(Model):
         '''
         super().__init__(random_seed, train_x, train_y, test_x=test_x, test_y=test_y, name=name, target_scaler=target_scaler)
 
+        self.path = path
         self.ps = ps
         self.models_pipe = models_pipe
         self.params = params
+
+        self.make_directory()
         return
     
-    def do_gridsearchcv(self):
+    def make_directory(self):
+        '''
+        Helper method to make directory path if not created
 
+        Parameters
+            self: instance of object
+            path: path of directory
+
+        Return
+            None
+        '''
+        if not os.path.exists(self.path):
+            os.makedirs(self.path)
+        return
+    
+    def do_gridsearchcv(self, save_results=True, validation_curves=True, learning_curves=True):
+        '''
+        Method to perform GridSearchCV to tune hyperparameters of select models
+
+        Parameters
+            self: instance of object
+
+        Return
+        '''
+        self.validation_curve_blob = dict()
+        self.learning_curve_blob = dict()
+        best_model = []
+        
         for model in self.models_pipe.keys():
 
             gs = GridSearchCV(estimator=self.models_pipe[model], 
                               param_grid=self.params[model], 
                               scoring='neg_mean_squared_error', 
-                              n_jobs=2, 
+                              n_jobs=3, 
                               cv=self.ps, 
                               return_train_score=True, 
                               verbose=3)
             
             gs.fit(self.train_x, self.train_y)
 
-            cv_results = gs.cv_results_
-            print(gs.best_score_, gs.best_params_, gs.best_estimator_)
-            print(cv_results)
+            # Update best_model
+            best_model.append([gs.best_score_, gs.best_params_, gs.best_estimator_, model])
+            
+            # Sort cv_results in ascending order of 'rank_test_score' and 'std_test_score'
+            cv_results = pd.DataFrame.from_dict(gs.cv_results_).sort_values(by=['rank_test_score', 'std_test_score'])
+            
+            # Get the important columns in cv_results
+            important_columns = ['rank_test_score',
+                                'mean_test_score', 
+                                'std_test_score', 
+                                'mean_train_score', 
+                                'std_train_score',
+                                'mean_fit_time', 
+                                'std_fit_time',                        
+                                'mean_score_time', 
+                                'std_score_time']
+            
+            # Move the important columns ahead
+            cv_results = cv_results[important_columns + sorted(list(set(cv_results.columns) - set(important_columns)))]
 
-            for param in self.params[model][0].keys():
-                train_scores, valid_scores = validation_curve(self.models_pipe[model], 
-                                                              self.train_x, 
-                                                              self.train_y, 
-                                                              param_name=param,
-                                                              param_range=self.params[model][0][param],
-                                                              cv=self.ps)
+            # Get Validation Curve data
+            if validation_curve:
+                param_dict = dict()
+                for param in self.params[model][0].keys():
+                    train_scores_vc, valid_scores_vc = validation_curve(self.models_pipe[model], 
+                                                                self.train_x, 
+                                                                self.train_y, 
+                                                                param_name=param,
+                                                                param_range=self.params[model][0][param],
+                                                                cv=self.ps,
+                                                                scoring='neg_mean_squared_error')
+                    param_dict[param] = [self.params[model][0][param], train_scores_vc, valid_scores_vc]
 
-                print('validation curve for {}'.format(param), train_scores, valid_scores)
+                # Format: {model_name: [{param: [range, train_scores, valid_scores]}]}
+                self.validation_curve_blob[model] = [param_dict]
 
-            train_sizes, train_scores, valid_scores = learning_curve(self.models_pipe[model], self.train_x, self.train_y, train_sizes=[10,25,50], cv=self.ps)
-            print('learning curve for {}'.format(model), train_sizes, train_scores, valid_scores)
+            # Get Learning Curve Data
+            if learning_curve:
+                train_sizes, train_scores_lc, valid_scores_lc, fit_times, score_times = learning_curve(self.models_pipe[model], 
+                                                                            self.train_x, 
+                                                                            self.train_y, 
+                                                                            train_sizes=[500,1000,10000,30000], 
+                                                                            cv=self.ps,
+                                                                            scoring='neg_mean_squared_error',
+                                                                            return_times=True)
 
-        return
+                # Format: {model_name: [train_sizes, train_scores_lc, valid_scores_lc, fit_times, score_times]}
+                self.learning_curve_blob[model] = [train_sizes, train_scores_lc, valid_scores_lc, fit_times, score_times]
 
+        # Sort best_model in descending order of the best_score_
+        best_model = sorted(best_model, key=lambda x : x[0], reverse=True)
+
+        self.best_model_df = pd.DataFrame(best_model, columns=['best_score', 'best_param', 'best_estimator', 'model'])
+        self.best_model_df['best_score'] = self.best_model_df['best_score']*-1
+
+        if save_results:
+            self.best_model_df.to_csv(self.path+'gridsearchcv_results.csv', index=False)
+        
+        return self.best_model_df, self.validation_curve_blob, self.learning_curve_blob
 class Plotter:
     def __init__(self, path, name, savename):
         '''
@@ -470,6 +618,8 @@ class Plotter:
             score_dict: dict of scores {model:score}
             score: score name for ylabel, str
             saveplot: default True, boolean to save plot or not
+            show: default True, boolean to show plot or not
+            alt: default 0, how many alternates of this method for self object we want to save. alt = 1 will add a '_1' to end of filename.
 
         Return
             None
@@ -492,13 +642,171 @@ class Plotter:
         if show:
             plt.show()
         
+        plt.close()
+        
+        return
+    
+    def learning_curves(self, lc_results, saveplot=True, show=False, alt=0):
+        '''
+        Method to plot learning curves from CV results
+
+        Parameters
+            lc_results: Results to plot learning curves of format: {model_name: [train_sizes, train_scores_lc, valid_scores_lc, fit_times]}
+            saveplot: default True, boolean to save plot or not
+            show: default True, boolean to show plot or not
+            alt: default 0, how many alternates of this method for self object we want to save. alt = 1 will add a '_1' to end of filename.
+        '''
+        if lc_results:
+            for model in lc_results.keys():
+                lc_data = lc_results[model]
+
+                # Create subplots
+                fig, axs = plt.subplots(3, 1, figsize=(15, 10))
+                plt.subplots_adjust(hspace=0.5)
+                fig.suptitle("Learning Curve for {}".format(model), fontsize=18, y=0.98)
+
+                train_scores_mean = np.mean(lc_data[1], axis=1)*-1
+                train_scores_std = np.std(lc_data[1], axis=1)*-1
+                val_scores_mean = np.mean(lc_data[2], axis=1)*-1
+                val_scores_std = np.std(lc_data[2], axis=1)*-1
+                fit_times_mean = np.mean(lc_data[3], axis=1)
+                fit_times_std = np.std(lc_data[3], axis=1)
+                train_sizes = lc_data[0]
+
+                # Plot learning curve
+                axs[0].grid()
+                axs[0].fill_between(
+                    train_sizes,
+                    train_scores_mean - train_scores_std,
+                    train_scores_mean + train_scores_std,
+                    alpha=0.1,
+                    color="r",
+                )
+                axs[0].fill_between(
+                    train_sizes,
+                    val_scores_mean - val_scores_std,
+                    val_scores_mean + val_scores_std,
+                    alpha=0.1,
+                    color="g",
+                )
+                axs[0].plot(
+                    train_sizes, train_scores_mean, "o-", color="tab:blue", label="Training score"
+                )
+                axs[0].plot(
+                    train_sizes, val_scores_mean, "o-", color="tab:orange", label="Validation score"
+                )
+                axs[0].legend(loc="best")
+                axs[0].set_xlabel("Training examples", fontsize=8)
+                axs[0].set_ylabel("MSE", fontsize=8)
+                axs[0].set_title("Learning Curve", fontsize=10)
+                axs[0].patch.set_facecolor('tab:gray')
+                axs[0].patch.set_alpha(0.15)
+
+                # Plot n_samples vs fit_times
+                axs[1].grid()
+                axs[1].plot(train_sizes, fit_times_mean, "o-")
+                axs[1].fill_between(
+                    train_sizes,
+                    fit_times_mean - fit_times_std,
+                    fit_times_mean + fit_times_std,
+                    alpha=0.1,
+                )
+                axs[1].set_xlabel("Training examples", fontsize=8)
+                axs[1].set_ylabel("fit_times", fontsize=8)
+                axs[1].set_title("Scalability of the model", fontsize=10)
+                axs[1].patch.set_facecolor('tab:gray')
+                axs[1].patch.set_alpha(0.15)
+
+                # Plot fit_time vs score
+                axs[2].grid()
+                axs[2].plot(fit_times_mean, val_scores_mean, "o-")
+                axs[2].fill_between(
+                    fit_times_mean,
+                    val_scores_mean - val_scores_std,
+                    val_scores_mean + val_scores_std,
+                    alpha=0.1,
+                )
+                axs[2].set_xlabel("fit_times", fontsize=8)
+                axs[2].set_ylabel("Score", fontsize=8)
+                axs[2].set_title("Performance of the model", fontsize=10)
+                axs[2].patch.set_facecolor('tab:gray')
+                axs[2].patch.set_alpha(0.15)
+
+                if saveplot:
+                    if alt == 0:
+                        plt.savefig(self.path + 'learning_curves' + '_' + model + '.png')
+                    else:
+                        plt.savefig(self.path + 'learning_curves' + '_' + model + str(alt) + '.png')
+                
+                if show:
+                    plt.show()
+
+                plt.close()
+
         return
 
-    def learning_curves(self):
+    def validation_curves(self, vc_results, saveplot=True, show=False, alt=0):
+        '''
+        Method to plot validation curves from GridsearchCV results
+        
+        Parameters
+            vc_results: Results to plot learning curves of format: {model_name: [{param: [range, train_scores, valid_scores]}]}
+            saveplot: default True, boolean to save plot or not
+            show: default True, boolean to show plot or not
+            alt: default 0, how many alternates of this method for self object we want to save. alt = 1 will add a '_1' to end of filename.
+        '''
+        if vc_results:
+            for model in vc_results.keys():
+                # Dictionary of {param: [range, train_scores, valid_scores]}
+                params = vc_results[model][0]
 
-        return
+                # Number of parameters that we have
+                n_params = len(params.keys())
+                
+                # Create subplots
+                fig, axs = plt.subplots(nrows=math.ceil(n_params/2), ncols=2, figsize=(15, 10))
+                plt.subplots_adjust(hspace=0.5)
+                fig.suptitle("Validation Curves for {}".format(model), fontsize=18, y=0.98)
 
-    def validation_curves(self):
+                for param, ax in zip(params.keys(), axs.ravel()):
+                    train_range = params[param][0]
+                    train_scores = params[param][1]*-1
+                    valid_scores = params[param][2]*-1
+
+                    train_scores_mean = np.mean(train_scores, axis=1)
+                    train_scores_std = np.std(train_scores, axis=1)
+                    val_scores_mean = np.mean(valid_scores, axis=1)
+                    val_scores_std = np.std(valid_scores, axis=1)
+
+                    # Train scores
+                    ax.scatter(train_range, train_scores, c='tab:blue')
+                    ax.plot(train_range, train_scores, c='tab:blue', label='Training Score')
+                    ax.fill_between(train_range, train_scores_mean - train_scores_std, train_scores_mean + train_scores_std, alpha=0.2, color="tab:blue", lw=2)
+                    
+                    # Test scores
+                    ax.scatter(train_range, valid_scores, c='tab:orange')
+                    ax.plot(train_range, valid_scores, c='tab:orange', label='Validation Score')
+                    ax.fill_between(train_range, val_scores_mean - val_scores_std, val_scores_mean + val_scores_std, alpha=0.2, color="tab:orange", lw=2)
+                    
+                    ax.set_title("{}".format(param), fontsize=10)
+                    ax.set_ylabel('')
+                    ax.legend(loc='best')
+                    ax.patch.set_facecolor('tab:gray')
+                    ax.patch.set_alpha(0.15)
+                
+                fig.text(0.5, 0.04, 'Hyperparameter Values', ha='center')
+                fig.text(0.04, 0.5, 'MSE', va='center', rotation='vertical')
+
+                if saveplot:
+                    if alt == 0:
+                        plt.savefig(self.path + 'validation_curves' + '_' + model + '.png')
+                    else:
+                        plt.savefig(self.path + 'validation_curves' + '_' + model + str(alt) + '.png')
+                
+                if show:
+                    plt.show()
+
+                plt.close()
 
         return
     
