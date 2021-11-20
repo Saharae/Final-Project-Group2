@@ -229,7 +229,7 @@ class Model:
 
         return
 
-    def save_model(self, filename):
+    def save_model(self, filename, model):
         '''
         Method to save object model
 
@@ -241,9 +241,9 @@ class Model:
             None
         '''
         with open(filename, 'wb') as file:
-            pickle.dump(self.model, file)
+            pickle.dump(model, file)
 
-        print('Saved model: {}, {}'.format(self.name, self.model))
+        print('Saved model: {}, {}'.format(self.name, model))
         return
     
     def load_model(self, filename):
