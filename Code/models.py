@@ -5,7 +5,7 @@ from models_helper import Dataset, Model, ModelTuner, Plotter
 from preprocessing_utils import get_repo_root
 
 from sklearn.linear_model import LinearRegression, SGDRegressor
-from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor
+from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor, VotingRegressor
 from sklearn.neighbors import KNeighborsRegressor
 
 def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33, run_base_estimators = False, run_model_tuning = False, load_model = False):
@@ -112,11 +112,14 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
             # 1)
         random_forest_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='random_forest_tuned', target_scaler=ss_target)
         random_forest_tuned.construct_model(RandomForestRegressor())
-        rf_params = {'n_estimators':[100, 200, 400, 600], 
-                     'max_depth':[10, 20, 40, 60], 
-                     'min_samples_split':[2, 5], 
-                     'min_samples_leaf':[1,2,4], 
+        rf_params = {'n_estimators':[200, 300, 400],
+                     'min_samples_leaf':[2, 4, 8, 12], 
+                     'max_features':[0.3, 0.5, 0.7],
+                     'max_depth':[5, 10, 15, 25]
                      }
+        # rf_params = {'n_estimators':[100, 200, 400], 
+        #              'min_samples_split':[2, 4, 8, 16], 
+        #              }
         # rf_params = { 
         #             'min_samples_leaf':[1,]
         #             }
@@ -126,9 +129,8 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
         gradient_boost_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='gradient_boost_tuned', target_scaler=ss_target)
         gradient_boost_tuned.construct_model(GradientBoostingRegressor())
         gb_params = {'learning_rate':[0.01, 0.1],
-                'n_estimators':[100, 200, 400, 600], 
-                'min_samples_split':[2, 6], 
-                'max_depth': [10, 20, 40, 60],
+                'n_estimators':[100, 200, 400], 
+                'min_samples_split':[2, 4, 8, 16], 
                 }
         # gb_params = {
         #         'max_depth': [3,]
@@ -139,7 +141,6 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
         knn_regressor_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='knn_regressor_tuned', target_scaler=ss_target)
         knn_regressor_tuned.construct_model(KNeighborsRegressor())
         knn_params = {'n_neighbors':[3, 5, 7, 9],
-            'weights':['uniform', 'distance'], 
             'p':[1, 2]
             }
         # knn_params = {
@@ -148,8 +149,10 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
         knn_regressor_tuned.set_params_to_tune(knn_params)
         
         # Do GridSearchCV of models and params
-        models = {random_forest_tuned.name: random_forest_tuned.model, gradient_boost_tuned.name: gradient_boost_tuned.model, knn_regressor_tuned.name:knn_regressor_tuned.model}
-        param_grids = {random_forest_tuned.name: [random_forest_tuned.params_dict], gradient_boost_tuned.name: [gradient_boost_tuned.params_dict], knn_regressor_tuned.name: [knn_regressor_tuned.params_dict]}
+        # models = {random_forest_tuned.name: random_forest_tuned.model, gradient_boost_tuned.name: gradient_boost_tuned.model, knn_regressor_tuned.name:knn_regressor_tuned.model}
+        # param_grids = {random_forest_tuned.name: [random_forest_tuned.params_dict], gradient_boost_tuned.name: [gradient_boost_tuned.params_dict], knn_regressor_tuned.name: [knn_regressor_tuned.params_dict]}
+        models = {random_forest_tuned.name: random_forest_tuned.model}
+        param_grids = {random_forest_tuned.name: [random_forest_tuned.params_dict]}
 
         gridsearchcv = ModelTuner(get_repo_root() + '/results/', random_seed, X_train_val, Y_train_val, test_x=test_X, test_y=test_Y, name='gridsearchcv', target_scaler=ss_target, ps=ps, models_pipe=models, params=param_grids)
         best_model_df, validation_curve_blob, learning_curve_blob = gridsearchcv.do_gridsearchcv()
@@ -176,9 +179,10 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
         best_model.construct_model(best_estimator)
         best_model.set_params(best_params)
         best_model.train()
+        my_model = best_model.get_model()
         
         # Save model
-        best_model.save_model(get_repo_root() + '/results/best_model.pkl')
+        best_model.save_model(get_repo_root() + '/results/best_model.pkl', my_model)
 
         # Load model
     if load_model:
