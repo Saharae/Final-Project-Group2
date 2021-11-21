@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     # Data preprocessing
     print('Doing preprocessing...')
-    df_train, df_test, df_val, ss_target = pre.preprocess()
+    df_train, df_test, df_val, ss_target, df = pre.preprocess()
 
     # EDA
 

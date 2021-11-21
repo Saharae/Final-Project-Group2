@@ -112,7 +112,7 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
             # 1)
         random_forest_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='random_forest_tuned', target_scaler=ss_target)
         random_forest_tuned.construct_model(RandomForestRegressor())
-        rf_params = {'n_estimators':[200, 300, 400],
+        rf_params = {'n_estimators':[200, 300, 400, 500],
                      'min_samples_leaf':[2, 4, 8, 12], 
                      'max_features':[0.3, 0.5, 0.7],
                      'max_depth':[5, 10, 15, 25]
