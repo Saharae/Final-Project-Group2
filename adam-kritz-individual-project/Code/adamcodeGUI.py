@@ -31,14 +31,20 @@ from PyQt5.QtWidgets import  QWidget,QLabel, QVBoxLayout, QHBoxLayout, QGridLayo
 from PyQt5.QtCore import QSize 
 
 
-
 # These components are essential for creating the graphics in pqt5 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar 
 from matplotlib.figure import Figure 
 
+### The way this works:
+### Each class is a separate window. Within each class you can define how you want
+### the window to look (size, whats in it, etc)
+### The Menu class at the bottom is the main window. In this window there is 
+### a file menu that contains the spots for each other window. 
+### All the functions at the bottom of the main window will open the other windows
+### if they are clicked.
 
-
+# Numerical Variables Window 
 class NumericalVars(QMainWindow):
 
     def __init__(self):
@@ -137,7 +143,7 @@ class NumericalVars(QMainWindow):
             self.fig.canvas.draw_idle()
 
             
-   
+# Categorical Variables Window 
 class CategoricalVars(QMainWindow):
 
     def __init__(self):
@@ -280,7 +286,8 @@ class CategoricalVars(QMainWindow):
             self.ax1.clear()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
-            
+
+# Target Variable Window            
 class TargetVar(QMainWindow):
 
     def __init__(self):
@@ -392,6 +399,7 @@ class Ada(QMainWindow):
         
         self.Title = 'AdaBoost Regressor'
         self.setWindowTitle(self.Title)
+        
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
@@ -414,9 +422,9 @@ class lin(QMainWindow):
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(500, 500)  
 
-
+# Prediction window
 class predi(QMainWindow):
-
+    send_fig = pyqtSignal(str)  # To manage the signals PyQT manages the communication
     def __init__(self):
         #::--------------------------------------------------------
         # Initialize the values of the class
@@ -424,14 +432,84 @@ class predi(QMainWindow):
         #::--------------------------------------------------------
         super(predi, self).__init__()
         
-        self.Title = 'Predicition Tool'
+        self.Title = 'Prediction Tool'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
-        self.layout = QVBoxLayout(self.main_widget)  
+        self.layout = QVBoxLayout(self.main_widget)   # Creates vertical layout
+        
+        
+        
+        self.groupBox1 = QGroupBox('Description')
+        self.groupBox1Layout= QHBoxLayout()
+        self.groupBox1.setLayout(self.groupBox1Layout)
+        
+        self.label = QLabel("This tool will allow you to make predictions against our best model, to see who can come out on top!\nWe will give you a list of features of a movie selected randomly from our test set and you will predict the weighted average score.\nOur model will also predict the weighted average score, and whoever comes the closest to the real score will win!")
+        self.groupBox1Layout.addWidget(self.label)
+        
+        self.groupBox15 = QGroupBox('Random Movie Generator')
+        self.groupBox15Layout= QHBoxLayout()
+        self.groupBox15.setLayout(self.groupBox15Layout)
+        
+        self.button = QPushButton('Generate', self)
+        self.button.setToolTip('This is an example button')
+        self.groupBox15Layout.addWidget(self.button)
+        self.button.clicked.connect(self.on_click)
+        
+        
+        self.groupBox175 = QGroupBox("Your Movie's 'Features")
+        self.groupBox175Layout= QHBoxLayout()
+        self.groupBox175.setLayout(self.groupBox175Layout)
+        self.label = QLabel("here is where movie features will go")
+        self.groupBox175Layout.addWidget(self.label)
+        
+        self.groupBox2 = QGroupBox('Input your guess')
+        self.groupBox2Layout= QHBoxLayout()
+        self.groupBox2.setLayout(self.groupBox2Layout)
+
+        self.txtInputText = QLineEdit(self)
+        
+
+        self.locked = QPushButton("Lock In!",self)
+        self.locked.clicked.connect(self.guess)
+
+        self.groupBox2Layout.addWidget(self.txtInputText)
+        self.groupBox2Layout.addWidget(self.locked)
+        
+        self.groupBox3 = QGroupBox("Results")
+        self.groupBox3Layout= QHBoxLayout()
+        self.groupBox3.setLayout(self.groupBox3Layout)
+        
+        
+
+        
+        self.label3 = QLabel('')
+        self.groupBox3Layout.addWidget(self.label3)
+
+
+        self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox15)
+        self.layout.addWidget(self.groupBox175)
+        self.layout.addWidget(self.groupBox2)
+        self.layout.addWidget(self.groupBox3)
+
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(500, 500)  
+        self.resize(1000, 1000)                         # Resize the window
 
+    def on_click(self):
+        print('PyQt5 button click')
 
+    def guess(self):
+        a = self.txtInputText.text()
+        b = 5
+        c = 10
+        if abs(c - float(a)) < abs(c - b):    
+            self.label3.setText("The results are in...\nYou Predicted: " + a + "\nOur model predicted: " + str(b) + "\nThe actual weighted average vote is: " + str(c) + "\nYou win!")
+        if abs(c - float(a)) > abs(c - b):   
+            self.label3.setText("The results are in...\nYou Predicted: " + a + "\nOur model predicted: " + str(b) + "\nThe actual weighted average vote is: " + str(c) +"\nYou lose!")
+        if abs(c - float(a)) == abs(c - b):   
+            self.label3.setText("The results are in...\nYou Predicted: " + a + "\nOur model predicted: " + str(b) + "\nThe actual weighted average vote is: " + str(c) +"\nIt's a tie!")
+
+# Main Menu window
 class Menu(QMainWindow):
 
     def __init__(self):
@@ -606,5 +684,5 @@ class Menu(QMainWindow):
 
 
 app = QApplication(sys.argv)  # creates the PyQt5 application
-mn = Menu()  # Cretes the menu
+mn = Menu()  # Creates the menu
 sys.exit(app.exec_())  # Close the application

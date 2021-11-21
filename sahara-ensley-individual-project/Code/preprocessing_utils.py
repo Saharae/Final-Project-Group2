@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 
+
 def get_repo_root():
     '''
     Function to get the repo base path of '.../Final-Project-Group2' so anyone can run.
@@ -29,16 +30,14 @@ def get_repo_root():
         repo_index = current_path_list.index(repo_name)
     except ValueError as err:
         repo_index = -2
-    current_path_list = current_path_list[:repo_index+1]
+    current_path_list = current_path_list[:repo_index + 1]
     current_path = '/'.join(current_path_list)
 
     if 'Final-Project-Group2' not in current_path:
-        current_path+='/Final-Project-Group2'
-    
+        current_path += '/Final-Project-Group2'
+
     return current_path
 
-base = get_repo_root()
-# base = '/Users/sahara/Documents/GW/DataMining/Final-Project-Group2'
 
 def load_all(base):
     ratings = pd.read_csv(f'{base}/data/IMDb ratings.csv')
@@ -48,6 +47,7 @@ def load_all(base):
     inflation = pd.read_csv(f'{base}/data/CPIAUCNS_inflation.csv')
 
     return ratings, movies, names, inflation, title_principals
+
 
 def clean_inflation(inflation):
     '''
@@ -62,6 +62,7 @@ def clean_inflation(inflation):
     inflation_simple = inflation.drop_duplicates(subset = 'year', keep = 'first')
     return inflation_simple
 
+
 def clean_money(money):
     '''
     Function to pass to a column in a pandas dataframe dealing with money
@@ -71,9 +72,12 @@ def clean_money(money):
     '''
     if type(money) == float:
         return np.nan
+    if money[0] != '$':
+        return np.nan
     white = money.find(' ')
-    trimmed = money[white+1:]
+    trimmed = money[white + 1:]
     return int(trimmed)
+
 
 def get_primary_country(x):
     if type(x) == float:
@@ -81,34 +85,35 @@ def get_primary_country(x):
 
     country = x[0]
     country_switch = {
-        'USA' : 'United States of America',
-        'UK' : 'United Kingdom of Great Britain and Northern Ireland',
+        'USA': 'United States of America',
+        'UK': 'United Kingdom of Great Britain and Northern Ireland',
         'Russia': 'Russian Federation',
-        'Taiwan' : 'Taiwan, Province of China',
-        'Czech Republic' : 'Czechia',
-        'Vietnam' : 'Viet Nam',
-        'North Korea' : "Korea (Democratic People's Republic of)",
-        'South Korea' : 'Korea, Republic of',
-        'The Democratic Republic Of Congo':'Congo, Democratic Republic of the',
-        'Moldova' : 'Moldova, Republic of',
+        'Taiwan': 'Taiwan, Province of China',
+        'Czech Republic': 'Czechia',
+        'Vietnam': 'Viet Nam',
+        'North Korea': "Korea (Democratic People's Republic of)",
+        'South Korea': 'Korea, Republic of',
+        'The Democratic Republic Of Congo': 'Congo, Democratic Republic of the',
+        'Moldova': 'Moldova, Republic of',
         'Palestine': 'Palestine, State of',
-        'Bolivia':'Bolivia (Plurinational State of)',
-        'Syria' : 'Syrian Arab Republic',
-        'Venezuela':'Venezuela (Bolivarian Republic of)',
-        'Iran' : 'Iran (Islamic Republic of)',
-        'Isle Of Man' : 'Isle of Man',
-        'Republic of North Macedonia' : 'North Macedonia'
+        'Bolivia': 'Bolivia (Plurinational State of)',
+        'Syria': 'Syrian Arab Republic',
+        'Venezuela': 'Venezuela (Bolivarian Republic of)',
+        'Iran': 'Iran (Islamic Republic of)',
+        'Isle Of Man': 'Isle of Man',
+        'Republic of North Macedonia': 'North Macedonia'
     }
     if country in country_switch.keys():
         country = country_switch[country]
 
     return country
 
+
 def to_region(df):
     url = 'https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.csv'
     regions = pd.read_csv(url)
     regions = regions[['name', 'region']].copy()
-    regions.rename(columns = {'name':'primary_country'}, inplace = True)
+    regions.rename(columns = {'name': 'primary_country'}, inplace = True)
     df_full = df.merge(regions, on = 'primary_country', how = 'left')
     df_full['region'] = df_full['region'].fillna('None')
     return df_full
@@ -133,22 +138,21 @@ def merge_and_clean_movies(movies, ratings, inflation):
     movies_full = movies_full.merge(inflation, on = ['year'])
 
     # Renaming a misnamed column -- 'worlwide' to 'worldwide'
-    movies_full.rename(columns = {'worlwide_gross_income' : 'worldwide_gross_income'}, inplace = True)
-
+    movies_full.rename(columns = {'worlwide_gross_income': 'worldwide_gross_income'}, inplace = True)
 
     good_cols = ['duration', 'budget', 'worldwide_gross_income', 'usa_gross_income', 'title', 'date_published', 'genre',
                  'country', 'director', 'writer', 'production_company', 'actors', 'weighted_average_vote', 'males_allages_avg_vote',
                  'females_allages_avg_vote', 'description', 'multiplier', 'imdb_title_id']
-    
+
     movies_clean = movies_full[good_cols].copy()
 
     # datetime transformation for the date published
     movies_clean['date_published'] = pd.to_datetime(movies_clean['date_published'])
 
     # cleaning the money columns
-    movies_clean.loc[:,'budget'] = movies_clean['budget'].apply(clean_money)
-    movies_clean.loc[:,'usa_gross_income'] = movies_clean['usa_gross_income'].apply(clean_money)
-    movies_clean.loc[:,'worldwide_gross_income'] = movies_clean['worldwide_gross_income'].apply(clean_money)
+    movies_clean.loc[:, 'budget'] = movies_clean['budget'].apply(clean_money)
+    movies_clean.loc[:, 'usa_gross_income'] = movies_clean['usa_gross_income'].apply(clean_money)
+    movies_clean.loc[:, 'worldwide_gross_income'] = movies_clean['worldwide_gross_income'].apply(clean_money)
 
     # filling with 0s so we can apply the multiplier
     movies_clean['budget'] = movies_clean['budget'].fillna(0)
@@ -173,14 +177,13 @@ def merge_and_clean_movies(movies, ratings, inflation):
     movies_clean['country'] = movies_clean['country'].str.split(', ')
 
     movies_clean['primary_country'] = movies_clean['country'].apply(get_primary_country)
-    movies_clean[movies_clean['primary_country'] != 'USA'][['budget', 'usa_gross_income', 'worldwide_gross_income']] = np.nan
-
 
     movies_clean = to_region(movies_clean)
 
     movies_clean.drop(['primary_country', 'country', 'multiplier', 'budget', 'usa_gross_income', 'worldwide_gross_income'], axis = 1, inplace = True)
 
     return movies_clean
+
 
 def merge_and_clean_names(names, title_principals):
     '''
@@ -200,6 +203,7 @@ def merge_and_clean_names(names, title_principals):
 
     return names_full
 
+
 def fit_production_company_frequency(df_train):
     '''
     Function to calculate frequency of occurence for 'production_company' feature on training data.
@@ -218,51 +222,53 @@ def fit_production_company_frequency(df_train):
 
     return prod_comp_frequency
 
+
 def transform_production_company_frequency(df, production_company_fitted):
     '''
     Function to transform production_company categorical feature to a frequency sampling based numerical feature.
-    
-    Any missing frequencies occurence is imputed with the median of existing (training) data. 
-    
-    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency. 
-    Regardless, we will treat these as the median of the fitted dataset. In other words, a new production_company our model hasn't seen before is treated with the median popularity/frequency of our dataset. 
+
+    Any missing frequencies occurence is imputed with the median of existing (training) data.
+
+    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency.
+    Regardless, we will treat these as the median of the fitted dataset. In other words, a new production_company our model hasn't seen before is treated with the median popularity/frequency of our dataset.
     '''
     production_company_fitted['frequency'] = production_company_fitted['frequency'].fillna(production_company_fitted['frequency'].median())
-    
-    df = pd.merge(df, production_company_fitted, on='production_company', how='left')
-    df.drop(['production_company'], axis=1, inplace=True)
-    df.rename(columns = {'frequency':'production_company_frequency'}, inplace = True)
+
+    df = pd.merge(df, production_company_fitted, on = 'production_company', how = 'left')
+    df.drop(['production_company'], axis = 1, inplace = True)
+    df.rename(columns = {'frequency': 'production_company_frequency'}, inplace = True)
 
     return df
 
-def binary_encoder_fit(df_train, col_names):
+
+def binary_encoder_fit(df_train, col_name):
     '''
     Function to fit binary encoder instead of using OHE to reduce dimensionality to log base 2.
 
     Parameters
     -----------
     df_train: training dataset
-    col_names: column of names to fit in binary encoding. Only enter col names per similar feature groupings.
-        ie: [genre1, genre2, genre3] not [genre, country, title]. The second case will need to fit each feature then transform.
+    col_name: column name
 
     Return
     -----------
     bin_df: dataframe of binary codes per label
     '''
-    col = []
-    for i in col_names:
-        col += df_train[i].tolist()
-    col.append('None')
-    col = set(col)
+    unique_data = [tuple(x) for x in set(tuple(sorted(x)) for x in df_train[col_name].to_list())]
+    unique_data.append(('None', 'None', 'None'))
 
-    numbers = [i for i in range(len(col))]
-    col_map = {x:y for x,y in zip(col, numbers)}
+    numbers = [i for i in range(len(unique_data))]
+    unique_data_map = {x: y for x, y in zip(unique_data, numbers)}
 
-    dict_map_bin = binary_encoder(col_map)
-    
-    bin_df = pd.DataFrame({'label':dict_map_bin.keys(), 'binary_code':dict_map_bin.values()})
+    dict_map_bin = binary_encoder(unique_data_map)
+
+    bin_df = pd.DataFrame({'label': dict_map_bin.keys(), 'binary_code': dict_map_bin.values()})
+
+    bin_df['join_key'] = bin_df['label'].map(lambda x: [i for i in x])
+    bin_df['join_key'] = bin_df['join_key'].map(lambda x: ''.join(sorted(''.join(x))))
 
     return bin_df
+
 
 def binary_encoder_transform(df, bin_df, col_name):
     '''
@@ -278,27 +284,38 @@ def binary_encoder_transform(df, bin_df, col_name):
     df: dataset with set 'col_name' as binary_encoded where n new columns = log_2(ceil(n of unique labels in col_name))
     '''
     bin_df_copy = bin_df.copy()
-    split_df = bin_df_copy['binary_code'].str.split('', expand=True)
+    split_df = bin_df_copy['binary_code'].str.split('', expand = True)
     split_df = split_df.iloc[:, 1:-1]
     split_df = split_df.apply(pd.to_numeric)
-    
-    split_df.rename(columns=lambda x: "{}_{}".format(col_name,(x-1)+1), inplace=True)
-    bin_df_copy.rename(columns={'label':col_name}, inplace=True)
 
-    bin_df_copy = pd.concat([bin_df_copy, split_df], axis=1) 
-    df = pd.merge(df, bin_df_copy, on=col_name, how='left')
-    
+    split_df.rename(columns = lambda x: "{}_{}".format(col_name, (x - 1) + 1), inplace = True)
+    bin_df_copy.rename(columns = {'label': col_name}, inplace = True)
+
+    bin_df_copy = pd.concat([bin_df_copy, split_df], axis = 1)
+
+    df['join_key'] = df[col_name].map(lambda x: [i for i in x])
+    df['join_key'] = df['join_key'].map(lambda x: ''.join(sorted(''.join(x))))
+    df = pd.merge(df, bin_df_copy, on = 'join_key', how = 'left')
+
     # If missing, impute with 'None' binary encodings
-    none_encoding = bin_df_copy[bin_df_copy[col_name] == 'None']
+    none_encoding = bin_df_copy[bin_df_copy[col_name] == ('None', 'None', 'None')]
     for i in range(len(split_df.columns)):
-        col_name_i = '{}_{}'.format(col_name,i+1)
+        col_name_i = '{}_{}'.format(col_name, i + 1)
         none_i = none_encoding[col_name_i]
-        df[col_name_i].fillna(float(none_i), inplace=True)
+        df[col_name_i].fillna(float(none_i), inplace = True)
 
-    df.drop(col_name, axis=1, inplace=True)
-    df.drop(['binary_code'], axis=1, inplace=True)
+    # Drop unnecessary columns
+    try:
+        df.drop(col_name, axis = 1, inplace = True)
+    except KeyError:
+        df.drop('{}_x'.format(col_name), axis = 1, inplace = True)
+        df.drop('{}_y'.format(col_name), axis = 1, inplace = True)
+
+    df.drop(['binary_code'], axis = 1, inplace = True)
+    df.drop(['join_key'], axis = 1, inplace = True)
 
     return df
+
 
 def binary_encoder(dict_map):
     '''
@@ -313,13 +330,14 @@ def binary_encoder(dict_map):
     ----------
     dict_map_bin: dictionary object where key = unique label, value = binarized string representation of int value
     '''
-    num_bits = math.log(len(dict_map),2)
+    num_bits = math.log(len(dict_map), 2)
     dict_map_bin = dict()
 
     for key, value in dict_map.items():
         dict_map_bin[key] = format(value, '0{}b'.format(math.ceil(num_bits)))
 
     return dict_map_bin
+
 
 def get_frequencies(all_items_list, col_name):
     '''
@@ -336,16 +354,17 @@ def get_frequencies(all_items_list, col_name):
     '''
     unique_set = set(all_items_list)
     total_unique_items = len(unique_set)
-    
+
     items_frequency_dict = dict()
     for i in all_items_list:
         items_frequency_dict[i] = items_frequency_dict.get(i, 0) + 1
 
-    items_frequency_dict = {item : count / total_unique_items for item, count in items_frequency_dict.items()}
+    items_frequency_dict = {item: count / total_unique_items for item, count in items_frequency_dict.items()}
 
-    frequency_df = pd.DataFrame({str(col_name):items_frequency_dict.keys(), 'frequency':items_frequency_dict.values()})
+    frequency_df = pd.DataFrame({str(col_name): items_frequency_dict.keys(), 'frequency': items_frequency_dict.values()})
 
-    return frequency_df 
+    return frequency_df
+
 
 def fit_weighted_popularity_casts(df_train, names):
     '''
@@ -363,25 +382,26 @@ def fit_weighted_popularity_casts(df_train, names):
     -------
     names: the 'fitted' names dataset on df_train. Fit in this case means finding the frequency of occurence per cast person in names.
     '''
-    df_train['actors_split'] = df_train['actors'].str.split(',', expand=False)
+    df_train['actors_split'] = df_train['actors'].str.split(',', expand = False)
     cast_list = flatten([x for x in df_train['actors_split'].squeeze()])
     cast_list = cast_list + df_train['director'].tolist()
     cast_list = cast_list + df_train['writer'].tolist()
 
     cast_frequency = get_frequencies(cast_list, 'name')
 
-    names = pd.merge(names, cast_frequency, on='name', how='left')
+    names = pd.merge(names, cast_frequency, on = 'name', how = 'left')
 
     return names
+
 
 def transform_weighted_popularity_casts(df, popularity_fitted):
     '''
     Function to transform cast and crew to a popularity measure weighted by importance on role in movie.
-    
-    Any missing frequencies for cast occurence is imputed with the median of existing data. 
-    
-    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency. 
-    Regardless, we will treat these as the median of the fitted dataset. In other words, a new person our model hasn't seen before is treated with the median popularity/frequency of our dataset. 
+
+    Any missing frequencies for cast occurence is imputed with the median of existing data.
+
+    Missing frequencies can occur from test/val data not being fitted or the original dataset itself did not have enough info to calculate a frequency.
+    Regardless, we will treat these as the median of the fitted dataset. In other words, a new person our model hasn't seen before is treated with the median popularity/frequency of our dataset.
 
     Parameters
     -----------
@@ -390,62 +410,63 @@ def transform_weighted_popularity_casts(df, popularity_fitted):
 
     Return
     ----------
-    df: transformed actors, directory, writer, and production company into encoded frequencies 
+    df: transformed actors, directory, writer, and production company into encoded frequencies
     '''
     popularity_fitted['frequency'] = popularity_fitted['frequency'].fillna(popularity_fitted['frequency'].median())
     good_cols = ['imdb_title_id', 'imdb_name_id', 'category', 'ordering', 'frequency']
 
-    joined_df = pd.merge(popularity_fitted, df, on='imdb_title_id', how='left')
+    joined_df = pd.merge(popularity_fitted, df, on = 'imdb_title_id', how = 'left')
     joined_df = joined_df[good_cols]
 
     # Calc solution to ordering of importance weight. See function for more info
-    solution = solve_linear_transformation([[1,1],[2,1]], [10/10, 9/10])
+    solution = solve_linear_transformation([[1, 1], [2, 1]], [10 / 10, 9 / 10])
 
     # Calculate weighted frequency
     joined_df['weighted_frequency'] = (joined_df['ordering'] * solution[0] + solution[1]) * joined_df['frequency']
 
     # Actors
     actors_df = joined_df.loc[(joined_df['category'] == 'actor') | (joined_df['category'] == 'actress')]
-    actors_df = actors_df.groupby(by=['imdb_title_id']).mean().reset_index()
+    actors_df = actors_df.groupby(by = ['imdb_title_id']).mean().reset_index()
     actors_df = actors_df[['imdb_title_id', 'weighted_frequency']]
 
     # Merge actors to df
-    df = pd.merge(df, actors_df, on='imdb_title_id', how='left')
-    df.drop(['actors'], axis=1, inplace=True)
-    df.rename(columns = {'weighted_frequency':'actors_weighted_frequency'}, inplace = True)
+    df = pd.merge(df, actors_df, on = 'imdb_title_id', how = 'left')
+    df.drop(['actors'], axis = 1, inplace = True)
+    df.rename(columns = {'weighted_frequency': 'actors_weighted_frequency'}, inplace = True)
 
     # Director
     director_df = joined_df.loc[(joined_df['category'] == 'director')]
-    director_df = director_df.groupby(by=['imdb_title_id']).mean().reset_index()
+    director_df = director_df.groupby(by = ['imdb_title_id']).mean().reset_index()
     director_df = director_df[['imdb_title_id', 'weighted_frequency']]
 
     # Merge director to df
-    df = pd.merge(df, director_df, on='imdb_title_id', how='left')
-    df.drop(['director'], axis=1, inplace=True)
-    df.rename(columns = {'weighted_frequency':'director_weighted_frequency'}, inplace = True)
+    df = pd.merge(df, director_df, on = 'imdb_title_id', how = 'left')
+    df.drop(['director'], axis = 1, inplace = True)
+    df.rename(columns = {'weighted_frequency': 'director_weighted_frequency'}, inplace = True)
 
     # Writer
     writer_df = joined_df.loc[(joined_df['category'] == 'writer')]
-    writer_df = writer_df.groupby(by=['imdb_title_id']).mean().reset_index()
+    writer_df = writer_df.groupby(by = ['imdb_title_id']).mean().reset_index()
     writer_df = writer_df[['imdb_title_id', 'weighted_frequency']]
 
     # Merge writer to df
-    df = pd.merge(df, writer_df, on='imdb_title_id', how='left')
-    df.drop(['writer'], axis=1, inplace=True)
-    df.rename(columns = {'weighted_frequency':'writer_weighted_frequency'}, inplace = True)
+    df = pd.merge(df, writer_df, on = 'imdb_title_id', how = 'left')
+    df.drop(['writer'], axis = 1, inplace = True)
+    df.rename(columns = {'weighted_frequency': 'writer_weighted_frequency'}, inplace = True)
 
     # Checks
     # print(len(df))
     # print(len(df[~np.isnan(df['actors_weighted_frequency'])]))
     # print(len(df[~np.isnan(df['director_weighted_frequency'])]))
     # print(len(df[~np.isnan(df['writer_weighted_frequency'])]))
-    
+
     return df
+
 
 def solve_linear_transformation(X, Y):
     '''
     Function to solve our transformation for weighted frequency of type:
-    
+
     order * m + b = weight multiplier, where m and b's are slope and intercept of our linear transformation
 
     ie: 1m + b = 10/10, 2m + b = 9/10, 3m + b = 8/10, ...., 10m + b = 1/10
@@ -463,8 +484,9 @@ def solve_linear_transformation(X, Y):
     Y = np.array(Y)
 
     solution = np.linalg.inv(X).dot(Y)
-    
+
     return solution
+
 
 def flatten(list):
     '''
@@ -482,13 +504,14 @@ def flatten(list):
     dummy_list = []
 
     for sublist in list:
-        # Try when sublist is a list so can iterate and get item except when np.nan and can't iterate.  
+        # Try when sublist is a list so can iterate and get item except when np.nan and can't iterate.
         try:
             for item in sublist:
                 dummy_list.append(item)
         except TypeError:
             continue
     return dummy_list
+
 
 def n_words(df, col_name):
     '''
@@ -506,6 +529,7 @@ def n_words(df, col_name):
     # print(df[[col_name, '{}_n_words'.format(col_name)]].head())
     return df
 
+
 def ratio_long_words(df, col_name, n_letters):
     '''
     Function to get ratio of words over n_letters
@@ -519,9 +543,10 @@ def ratio_long_words(df, col_name, n_letters):
     Return
     df: dataset transformed
     '''
-    df['{}_ratio_long_words'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x.split(' ') if len(i) > n_letters])/len(x.split(' ')) if isinstance(x, str) else 0)
+    df['{}_ratio_long_words'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x.split(' ') if len(i) > n_letters]) / len(x.split(' ')) if isinstance(x, str) else 0)
     # print(df[[col_name, '{}_ratio_long_words'.format(col_name)]].head())
     return df
+
 
 def ratio_vowels(df, col_name):
     '''
@@ -536,9 +561,10 @@ def ratio_vowels(df, col_name):
     df: dataset transformed
     '''
     vowels = ['a', 'e', 'i', 'o', 'u']
-    df['{}_ratio_vowels'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i in vowels])/len([i for i in x]) if isinstance(x, str) else 0)
+    df['{}_ratio_vowels'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i in vowels]) / len([i for i in x]) if isinstance(x, str) else 0)
     # print(df[[col_name, '{}_ratio_vowels'.format(col_name)]].head())
     return df
+
 
 def ratio_interesting_characters(df, col_name):
     '''
@@ -553,9 +579,10 @@ def ratio_interesting_characters(df, col_name):
     df: dataset transformed
     '''
     char = ['!', '?', '$', '#', '%', '*', '(', ')', '+']
-    df['{}_ratio_char'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i in char])/len([i for i in x]) if isinstance(x, str) else 0)
+    df['{}_ratio_char'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i in char]) / len([i for i in x]) if isinstance(x, str) else 0)
     # print(df[[col_name, '{}_ratio_char'.format(col_name)]].head())
     return df
+
 
 def ratio_capital_letters(df, col_name):
     '''
@@ -569,9 +596,10 @@ def ratio_capital_letters(df, col_name):
     Return
     df: dataset transformed
     '''
-    df['{}_ratio_capital_letters'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i.isupper()])/len([i for i in x]) if isinstance(x, str) else 0)
+    df['{}_ratio_capital_letters'.format(col_name)] = df[col_name].map(lambda x: len([i for i in x if i.isupper()]) / len([i for i in x]) if isinstance(x, str) else 0)
     # print(df[[col_name, '{}_ratio_capital_letters'.format(col_name)]].head())
     return df
+
 
 def US_movies(movies):
     '''
@@ -581,6 +609,7 @@ def US_movies(movies):
     '''
     us_movies = movies[movies['primary_country'] == 'USA']
     return us_movies
+
 
 def get_train_test_val(data, test_size = 0.3, val_size = 0.2):
     '''
@@ -596,14 +625,13 @@ def get_train_test_val(data, test_size = 0.3, val_size = 0.2):
     '''
 
     df_train, df_test = train_test_split(data, test_size = (test_size + val_size), random_state = 100)
-    df_test, df_val = train_test_split(df_test, test_size = val_size/(test_size + val_size), random_state = 100)
+    df_test, df_val = train_test_split(df_test, test_size = val_size / (test_size + val_size), random_state = 100)
 
     return df_train, df_test, df_val
 
 
 def expand_date(df, col_to_expand, keep_original = False):
-
-    df[col_to_expand+'_year'] = df[col_to_expand].dt.year
+    df[col_to_expand + '_year'] = df[col_to_expand].dt.year
     df[col_to_expand + '_month'] = df[col_to_expand].dt.month
     df[col_to_expand + '_day'] = df[col_to_expand].dt.day
 
@@ -612,13 +640,15 @@ def expand_date(df, col_to_expand, keep_original = False):
 
     return df
 
+
 def get_missing(df):
-    percent_missing = pd.DataFrame(df.isnull().sum() * 100 / len(df)).reset_index().rename(columns = {'index':'var', 0:'perc'})
+    percent_missing = pd.DataFrame(df.isnull().sum() * 100 / len(df)).reset_index().rename(columns = {'index': 'var', 0: 'perc'})
     percent_missing['dtype'] = percent_missing.apply(lambda x: str(df[x['var']].dtype), axis = 1)
     to_impute_num = percent_missing[(percent_missing['dtype'].isin(['int64', 'float64'])) & (percent_missing['perc'] > 0)]
     to_impute_cat = percent_missing[(~percent_missing['dtype'].isin(['int64', 'float64'])) & (percent_missing['perc'] > 0)]
 
     return to_impute_num, to_impute_cat
+
 
 def autobots_assemble(df_train, df_test, df_val, names, target):
     '''
@@ -633,36 +663,41 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df = expand_date(df, col_to_expand = 'date_published', keep_original = False)
 
     # ENCODE CAT
-    
+
     # Encode popularity of cast and crew weighted by importance of role in movie
     popularity_fitted = fit_weighted_popularity_casts(df_train, names)
     df = transform_weighted_popularity_casts(df, popularity_fitted)
-    
+
     # Encode production company
     production_company_fitted = fit_production_company_frequency(df_train)
     df = transform_production_company_frequency(df, production_company_fitted)
-    
+
     # Encode genres
-    bin_df = binary_encoder_fit(df_train, ['genre1', 'genre2', 'genre3'])
-    df = binary_encoder_transform(df, bin_df, col_name='genre1')
-    df = binary_encoder_transform(df, bin_df, col_name='genre2')
-    df = binary_encoder_transform(df, bin_df, col_name='genre3')
-    
-    df.drop(['genre'], axis = 1, inplace = True)
+    # bin_df = binary_encoder_fit(df_train, ['genre1', 'genre2', 'genre3'])
+    # df = binary_encoder_transform(df, bin_df, col_name='genre1')
+    # df = binary_encoder_transform(df, bin_df, col_name='genre2')
+    # df = binary_encoder_transform(df, bin_df, col_name='genre3')
+
+    bin_df = binary_encoder_fit(df_train, col_name = 'genre')
+    df = binary_encoder_transform(df, bin_df, col_name = 'genre')
+
+    df.drop(['genre1'], axis = 1, inplace = True)
+    df.drop(['genre2'], axis = 1, inplace = True)
+    df.drop(['genre3'], axis = 1, inplace = True)
 
     # Encode title
-    df = n_words(df, col_name='title')
-    df = ratio_long_words(df, col_name='title', n_letters=4)
-    df = ratio_vowels(df, col_name='title')
-    df = ratio_capital_letters(df, col_name='title')
+    df = n_words(df, col_name = 'title')
+    df = ratio_long_words(df, col_name = 'title', n_letters = 4)
+    df = ratio_vowels(df, col_name = 'title')
+    df = ratio_capital_letters(df, col_name = 'title')
 
     df.drop(['title'], axis = 1, inplace = True)
 
     # Encode description
-    df = n_words(df, col_name='description')
-    df = ratio_long_words(df, col_name='description', n_letters=4)
-    df = ratio_vowels(df, col_name='description')
-    df = ratio_capital_letters(df, col_name='description')
+    df = n_words(df, col_name = 'description')
+    df = ratio_long_words(df, col_name = 'description', n_letters = 4)
+    df = ratio_vowels(df, col_name = 'description')
+    df = ratio_capital_letters(df, col_name = 'description')
 
     df.drop(['description'], axis = 1, inplace = True)
 
@@ -670,9 +705,9 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df = pd.get_dummies(df, columns = ['region'])
 
     # Needed this id for getting frequencies, can drop after done.
-    df.drop('imdb_title_id', axis=1, inplace=True)
-    df.drop('males_allages_avg_vote', axis=1, inplace=True)
-    df.drop('females_allages_avg_vote', axis=1, inplace=True)
+    df.drop('imdb_title_id', axis = 1, inplace = True)
+    df.drop('males_allages_avg_vote', axis = 1, inplace = True)
+    df.drop('females_allages_avg_vote', axis = 1, inplace = True)
 
     # re-separate data
     df_train = df.loc[df_train.index].copy()
@@ -681,49 +716,60 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
 
     # impute
     to_impute_num, to_impute_cat = get_missing(df)
-    imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+    imp_mean = SimpleImputer(missing_values = np.nan, strategy = 'mean')
 
-    # standardize - make new columns for target, overwrite the others
     df_train[to_impute_num['var']] = imp_mean.fit_transform(df_train[to_impute_num['var']])
     df_test[to_impute_num['var']] = imp_mean.transform(df_test[to_impute_num['var']])
     df_val[to_impute_num['var']] = imp_mean.transform(df_val[to_impute_num['var']])
 
     # standardize --
-    ss = StandardScaler()
+    ss_features = StandardScaler()
+    ss_target = StandardScaler()
 
-    #numerical features until the cat is transformed
-    vars_to_standardize = np.array(df_train.columns.drop([]))
+    # numerical features until the cat is transformed
+    vars_to_standardize = np.array(df_train.columns.drop(['weighted_average_vote']))
 
-    df_train.loc[:,vars_to_standardize] = ss.fit_transform(df_train[vars_to_standardize])
-    df_test.loc[:,vars_to_standardize] = ss.transform(df_test[vars_to_standardize])
-    df_val.loc[:,vars_to_standardize] = ss.transform(df_val[vars_to_standardize])
+    # Scale features
+    df_train.loc[:, vars_to_standardize] = ss_features.fit_transform(df_train[vars_to_standardize])
+    df_test.loc[:, vars_to_standardize] = ss_features.transform(df_test[vars_to_standardize])
+    df_val.loc[:, vars_to_standardize] = ss_features.transform(df_val[vars_to_standardize])
 
-    return df_train, df_test, df_val
+    # Scale target
+    df_train['weighted_average_vote'] = ss_target.fit_transform(df_train['weighted_average_vote'].values.reshape(-1, 1)).reshape(-1).tolist()
+    df_test['weighted_average_vote'] = ss_target.transform(df_test['weighted_average_vote'].values.reshape(-1, 1)).reshape(-1).tolist()
+    df_val['weighted_average_vote'] = ss_target.transform(df_val['weighted_average_vote'].values.reshape(-1, 1)).reshape(-1).tolist()
+
+    return df_train, df_test, df_val, ss_target, df
 
 
 def preprocess(test_size = 0.15, val_size = 0.15):
-
+    base = get_repo_root()
     ratings, movies, names, inflation, title_principals = load_all(base)
     inflation_clean = clean_inflation(inflation)
     movies = merge_and_clean_movies(movies, ratings, inflation_clean)
     names = merge_and_clean_names(names, title_principals)
 
     df_train, df_test, df_val = get_train_test_val(movies, test_size = test_size, val_size = val_size)
-    df_train, df_test, df_val = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
+    df_train, df_test, df_val, ss_target, df = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
 
-    return df_train, df_test, df_val
+    return df_train, df_test, df_val, ss_target, df
 
-df_train, df_test, df_val = preprocess()
 
-# Josh added these just to double check datasets, can delete once we're confident in dataset
-print(df_train.columns)
-print(len(df_train.columns))
+if __name__ == "__main__":
+    print('Executing', __name__)
+    df_train, df_test, df_val = preprocess()
 
-print(len(df_train))
-print(len(df_test))
-print(len(df_val))
+    # Josh added these just to double check datasets, can delete once we're confident in dataset
+    print(df_train.columns)
+    print(len(df_train.columns))
 
-print(df_train.head())
+    print(len(df_train))
+    print(len(df_test))
+    print(len(df_val))
+
+    print(df_train.head())
+else:
+    print('Importing:', __name__)
 
 # just so I don't keep losing this line. delete later
 # percent_missing = df.isnull().sum() * 100 / len(df)

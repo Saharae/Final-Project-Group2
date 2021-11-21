@@ -715,7 +715,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df_test['weighted_average_vote'] = ss_target.transform(df_test['weighted_average_vote'].values.reshape(-1,1)).reshape(-1).tolist()
     df_val['weighted_average_vote'] = ss_target.transform(df_val['weighted_average_vote'].values.reshape(-1,1)).reshape(-1).tolist()
 
-    return df_train, df_test, df_val, ss_target
+    return df_train, df_test, df_val, ss_target, df
 
 def preprocess(test_size = 0.15, val_size = 0.15):
     base = get_repo_root()
@@ -725,9 +725,9 @@ def preprocess(test_size = 0.15, val_size = 0.15):
     names = merge_and_clean_names(names, title_principals)
 
     df_train, df_test, df_val = get_train_test_val(movies, test_size = test_size, val_size = val_size)
-    df_train, df_test, df_val, ss_target = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
+    df_train, df_test, df_val, ss_target, df = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
 
-    return df_train, df_test, df_val, ss_target
+    return df_train, df_test, df_val, ss_target, df
 
 if __name__ == "__main__":
     print('Executing', __name__)
@@ -744,6 +744,3 @@ if __name__ == "__main__":
     print(df_train.head())
 else:
     print('Importing:', __name__)
-
-# just so I don't keep losing this line. delete later
-# percent_missing = df.isnull().sum() * 100 / len(df)
