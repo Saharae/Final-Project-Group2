@@ -6,8 +6,6 @@ import os
 import math
 import pickle
 
-from sklearn.linear_model import LinearRegression, SGDRegressor
-from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import PredefinedSplit, GridSearchCV, validation_curve, learning_curve
 class Dataset:
@@ -20,7 +18,7 @@ class Dataset:
             train_df: training dataframe
             test_df: testing dataframe
             val_df: validation dataframe
-            random_seed: random_seed integet number
+            random_seed: random_seed integer number
             label: str of label column name
 
         Return
@@ -107,72 +105,6 @@ class Dataset:
         '''
         return self.train_X, self.test_X, self.val_X, self.train_Y,  self.test_Y, self.val_Y
 
-    def most_important_features_analysis(self, show=False):
-        '''
-        Method to perform analysis to get most important features using a very basic RandomForest.
-
-        Parameters
-            self: instance of object
-            show: Boolean value whether to show plot of feature importance or not. Default = False.
-        
-        Return
-            None
-        '''
-        print('Finding most important features...')
-        basic_random_forest = RandomForestRegressor(max_depth=25, random_state=self.random_seed)
-        basic_random_forest.fit(self.train_X, self.train_Y)
-        
-        self.feature_importance = pd.DataFrame(np.hstack((np.array(self.train_df_X.columns).reshape(-1,1), basic_random_forest.feature_importances_.reshape(-1,1))), columns=['Features', 'Importance'])
-        self.feature_importance = self.feature_importance.sort_values(ascending=False, by='Importance').reset_index(drop=True)
-        print(self.feature_importance.head())
-
-        if show:
-            plt.figure(figsize=(10, 5))
-            plt.bar(self.feature_importance['Features'], self.feature_importance['Importance'], color='tab:orange')
-            
-            plt.xlabel('Features')
-            plt.ylabel('Importance')
-            plt.xticks(rotation=90)
-            
-            plt.tight_layout()
-            plt.show()
-
-        return
-    
-    def get_most_important_features(self):
-        '''
-        Method to perform analysis to get most important features using a very basic RandomForest.
-
-        Parameters
-            self: instance of object
-        
-        Return
-            self.feature_importance: dataframe of feature importance by feature
-        '''
-
-        return self.feature_importance
-    
-    def use_most_important_features(self, top_n):
-        '''
-        Method to choose top n most important features to use from most_important_features_analysis.
-        Sets self.
-
-        Parameters
-            self: instance of object
-            top_n: top number of features to use
-        
-        Return
-            None
-        '''
-        features_to_use = self.feature_importance['Features'].head(top_n).to_list()
-
-        self.train_df_X = self.train_df_X[features_to_use]
-        self.test_df_X = self.test_df_X[features_to_use]
-        self.val_df_X = self.val_df_X[features_to_use]
-
-        self.data_as_arrays()
-        return
-
     def get_train_val_predefined_split(self):
         '''
         Method to combine train and validation dataset into one and set predefined split for CV
@@ -197,7 +129,7 @@ class Dataset:
         return self.X_train_val, self.Y_train_val, self.test_X, self.test_Y, self.ps
 
 class Model:
-    def __init__(self, random_seed, train_x, train_y, val_x=None, val_y=None, test_x=None, test_y=None, name=None, target_scaler=None):
+    def __init__(self, random_seed, train_x=None, train_y=None, val_x=None, val_y=None, test_x=None, test_y=None, name=None, target_scaler=None):
         '''
         Init method for Model class
 
@@ -278,7 +210,7 @@ class Model:
             self.test_x = test_x
 
         self.test_y_predict = self.model.predict(self.test_x)
-        return
+        return self.test_y_predict
 
     def train(self):
         '''
@@ -395,8 +327,9 @@ class Model:
             self.val_y = val_y
 
         self.val_y_predict = self.model.predict(self.val_x)
-
         self.inv_val_y_predict = self.scaler.inverse_transform(self.val_y_predict.reshape(-1,1))
+        
+        self.inv_val_y = val_y.reshape(-1,1)
         self.inv_val_y = self.scaler.inverse_transform(self.val_y.reshape(-1,1))
 
         self.mse_val = mean_squared_error(self.inv_val_y, self.inv_val_y_predict)
@@ -551,7 +484,7 @@ class ModelTuner(Model):
             cv_results = cv_results[important_columns + sorted(list(set(cv_results.columns) - set(important_columns)))]
 
             # Get Validation Curve data
-            if validation_curve:
+            if validation_curves:
                 param_dict = dict()
                 for param in self.params[model][0].keys():
                     train_scores_vc, valid_scores_vc = validation_curve(self.models_pipe[model], 
@@ -567,7 +500,7 @@ class ModelTuner(Model):
                 self.validation_curve_blob[model] = [param_dict]
 
             # Get Learning Curve Data
-            if learning_curve:
+            if learning_curves:
                 train_sizes, train_scores_lc, valid_scores_lc, fit_times, score_times = learning_curve(self.models_pipe[model], 
                                                                             self.train_x, 
                                                                             self.train_y, 
@@ -808,6 +741,86 @@ class Plotter:
 
                 plt.close()
 
+        return
+
+    def most_important_features(self, train_df, model, saveplot=True, show=False, alt=0):
+        '''
+        Method to perform analysis to get most important features from RandomForest.
+
+        Parameters
+            self: instance of object
+            train_df: training dataframe
+            model: model to use
+            saveplot: default True, boolean to save plot or not
+            show: default True, boolean to show plot or not
+            alt: default 0, how many alternates of this method for self object we want to save. alt = 1 will add a '_1' to end of filename.
+        
+        Return
+            None
+        '''
+        print('Finding most important features...')
+
+        self.feature_importance = pd.DataFrame(np.hstack((np.array(train_df.columns).reshape(-1,1), model.feature_importances_.reshape(-1,1))), columns=['Features', 'Importance'])
+        self.feature_importance = self.feature_importance.sort_values(ascending=False, by='Importance').reset_index(drop=True)
+
+        plt.figure(figsize=(10, 5))
+        
+        plt.bar(self.feature_importance['Features'], self.feature_importance['Importance'], color='tab:orange')
+        
+        plt.xlabel('Features')
+        plt.ylabel('Mean Decrease in Impurity (Gini)')
+        plt.title('Feature Importance - Sorted')
+        plt.xticks(rotation=90)
+
+        plt.tight_layout()
+
+        if saveplot:
+            if alt == 0:
+                plt.savefig(self.path + 'most_important_features' + '_' + self.savename + '.png')
+            else:
+                plt.savefig(self.path + 'most_important_features' + '_' + self.savename + str(alt) + '.png')
+        
+        if show:
+            plt.show()
+        
+        plt.close()
+
+        return
+
+    def vs_random_bar(self, scores_dict, saveplot=True, show=False, alt=0):
+        '''
+        Method to plot a bar chart of models' avg scores
+
+        Parameters
+            self: instance of object
+            scores_dict: dict of scores to plot bar chart of form: {'Model':['Our Model', 'Random Model'], 'MSE':[mse_ctxt, mse_ctxt_random]}
+            saveplot: default True, boolean to save plot or not
+            show: default True, boolean to show plot or not
+            alt: default 0, how many alternates of this method for self object we want to save. alt = 1 will add a '_1' to end of filename.
+
+        Return
+            None
+        '''
+        models = scores_dict[list(scores_dict.keys())[0]]
+        scores = scores_dict[list(scores_dict.keys())[1]]
+
+        plt.figure(figsize = (10,5))
+        plt.bar(models, scores, color = 'tab:orange', width = 0.4)
+        plt.xlabel(list(scores_dict.keys())[0])
+        plt.ylabel(list(scores_dict.keys())[1])
+        plt.title('Model Performance vs Random')
+            
+        if saveplot:
+            if alt == 0:
+                plt.savefig(self.path + 'vs_random' + '_' + self.savename + '.png')
+            else:
+                plt.savefig(self.path + 'vs_random' + '_' + self.savename + str(alt) + '.png')
+        
+        if show:
+            plt.show()
+        
+        plt.close()
+        
         return
     
     def make_directory(self):

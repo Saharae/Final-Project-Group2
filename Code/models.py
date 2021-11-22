@@ -1,14 +1,18 @@
 # This file runs our modeling 
 import pandas as pd
+import numpy as np
 
 from models_helper import Dataset, Model, ModelTuner, Plotter
 from preprocessing_utils import get_repo_root
 
-from sklearn.linear_model import LinearRegression, SGDRegressor
-from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor, VotingRegressor
-from sklearn.neighbors import KNeighborsRegressor
+from scipy.stats import shapiro, ttest_ind, bartlett, mannwhitneyu
 
-def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33, run_base_estimators = False, run_model_tuning = False, load_model = False):
+from sklearn.linear_model import SGDRegressor
+from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.metrics import mean_squared_error
+
+def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33, run_base_estimators = False, run_model_tuning = False, fast_gridsearch = True, save_model = False):
     '''
     '''
 
@@ -18,8 +22,6 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
     data = Dataset(df_train, df_test, df_val, random_seed, label='weighted_average_vote')
     data.split_features_target()
     data.data_as_arrays()
-    # data.most_important_features_analysis(show=False)
-    # data.use_most_important_features(10)
 
     train_X, test_X, val_X, train_Y,  test_Y, val_Y = data.get_data_as_arrays()
 
@@ -83,81 +85,74 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
     ####################################################
     # 3) GridSearchCV and Hyperparameter Tuning
     ####################################################
-    if run_model_tuning:
-        # Hyperparameters to tune:
-        # RF: 
-            # n_estimators: number of trees, int default 100
-            # max_depth: max depth of tree, int default None
-            # min_samples_split: min samples required to split and internal node, int default 2
-            # min_samples_leaf: min samples required to be at leaf node, int default 1
-            # max_features: n of features to consider when looking for best split, int or {"auto", "sqrt", "log2"}, default = "auto"
-            # bootstrap: default = True
-            # max_samples: int, if bootsrap is true, then draw max_samples
-        # GB:
-            # learning_rate: float, default 0.1
-            # n_estimators: int, default 100 larger number better to avoid overfitting
-            # min_samples_split: int, default 2
-            # min_samples_leaf: int, default 1
-            # max_depth: int, default 3
-            # max_features: "auto", "sqrt", "log2" 
-        # KNN:
-            # n_neighbors: int, default 5
-            # weights: 'uniform', 'distance'
-            # p: Power paramter for Minkowski metric. p=1=manhattan distance, p=2=euclidean distance
+    
+    # Hyperparameters to tune:
+    # RF: 
+        # n_estimators: number of trees, int default 100
+        # max_depth: max depth of tree, int default None
+        # min_samples_split: min samples required to split and internal node, int default 2
+        # min_samples_leaf: min samples required to be at leaf node, int default 1
+        # max_features: n of features to consider when looking for best split, int or {"auto", "sqrt", "log2"}, default = "auto"
+    # GB:
+        # learning_rate: float, default 0.1
+        # n_estimators: int, default 100 larger number better to avoid overfitting
+        # min_samples_split: int, default 2
+        # min_samples_leaf: int, default 1
+        # max_depth: int, default 3
+        # max_features: "auto", "sqrt", "log2" 
+    # KNN:
+        # n_neighbors: int, default 5
+        # weights: 'uniform', 'distance'
+        # p: Power paramter for Minkowski metric. p=1=manhattan distance, p=2=euclidean distance
 
-        # Combine train_val and get predefined split
-        X_train_val, Y_train_val, test_X, test_Y, ps = data.get_train_val_predefined_split()
+    # Combine train_val and get predefined split
+    X_train_val, Y_train_val, test_X, test_Y, ps = data.get_train_val_predefined_split()
 
-        # Models to tune and their parameters:
-            # 1)
-        random_forest_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='random_forest_tuned', target_scaler=ss_target)
-        random_forest_tuned.construct_model(RandomForestRegressor())
-        rf_params = {'n_estimators':[200, 300, 400, 500],
-                     'min_samples_leaf':[2, 4, 8, 12], 
-                     'max_features':[0.3, 0.5, 0.7],
-                     'max_depth':[5, 10, 15, 25]
-                     }
-        # rf_params = {'n_estimators':[100, 200, 400], 
-        #              'min_samples_split':[2, 4, 8, 16], 
-        #              }
-        # rf_params = { 
-        #             'min_samples_leaf':[1,]
-        #             }
-        random_forest_tuned.set_params_to_tune(rf_params)
+    # Models to tune and their parameters:
+        # 1)
+    random_forest_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='random_forest_tuned', target_scaler=ss_target)
+    random_forest_tuned.construct_model(RandomForestRegressor())
+    rf_params = {'n_estimators':[200, 300, 400, 500],
+                    'min_samples_leaf':[2, 4, 8, 12], 
+                    'max_features':[0.3, 0.5, 0.7],
+                    'max_depth':[5, 10, 15, 25]
+                    }
+    
+    random_forest_tuned.set_params_to_tune(rf_params)
 
-            # 2)
-        gradient_boost_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='gradient_boost_tuned', target_scaler=ss_target)
-        gradient_boost_tuned.construct_model(GradientBoostingRegressor())
-        gb_params = {'learning_rate':[0.01, 0.1],
-                'n_estimators':[100, 200, 400], 
-                'min_samples_split':[2, 4, 8, 16], 
-                }
-        # gb_params = {
-        #         'max_depth': [3,]
-        #         }
-        gradient_boost_tuned.set_params_to_tune(gb_params)
-
-            # 3)    
-        knn_regressor_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='knn_regressor_tuned', target_scaler=ss_target)
-        knn_regressor_tuned.construct_model(KNeighborsRegressor())
-        knn_params = {'n_neighbors':[3, 5, 7, 9],
-            'p':[1, 2]
+        # 2)
+    gradient_boost_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='gradient_boost_tuned', target_scaler=ss_target)
+    gradient_boost_tuned.construct_model(GradientBoostingRegressor())
+    gb_params = {'learning_rate':[0.01, 0.1],
+            'n_estimators':[100, 200, 400], 
+            'min_samples_split':[2, 4, 8, 16], 
             }
-        # knn_params = {
-        #     'p':[1,]
-        #     }
-        knn_regressor_tuned.set_params_to_tune(knn_params)
-        
-        # Do GridSearchCV of models and params
-        # models = {random_forest_tuned.name: random_forest_tuned.model, gradient_boost_tuned.name: gradient_boost_tuned.model, knn_regressor_tuned.name:knn_regressor_tuned.model}
-        # param_grids = {random_forest_tuned.name: [random_forest_tuned.params_dict], gradient_boost_tuned.name: [gradient_boost_tuned.params_dict], knn_regressor_tuned.name: [knn_regressor_tuned.params_dict]}
+    
+    gradient_boost_tuned.set_params_to_tune(gb_params)
+
+        # 3)    
+    knn_regressor_tuned = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='knn_regressor_tuned', target_scaler=ss_target)
+    knn_regressor_tuned.construct_model(KNeighborsRegressor())
+    knn_params = {'n_neighbors':[3, 5, 7, 9],
+        'p':[1, 2]
+        }
+    
+    knn_regressor_tuned.set_params_to_tune(knn_params)
+    
+    # Do GridSearchCV of models and params
+    if fast_gridsearch:
         models = {random_forest_tuned.name: random_forest_tuned.model}
-        param_grids = {random_forest_tuned.name: [random_forest_tuned.params_dict]}
+        param_grids = {random_forest_tuned.name: [{'max_depth':[25,], 'max_features':[0.7,], 'min_samples_leaf':[2,], 'n_estimators':[500,]}]}
+    else:
+        models = {random_forest_tuned.name: random_forest_tuned.model, gradient_boost_tuned.name: gradient_boost_tuned.model, knn_regressor_tuned.name:knn_regressor_tuned.model}
+        param_grids = {random_forest_tuned.name: [random_forest_tuned.params_dict], gradient_boost_tuned.name: [gradient_boost_tuned.params_dict], knn_regressor_tuned.name: [knn_regressor_tuned.params_dict]}
 
+    # Skip tuning to run faster once we already have found best model
+    if run_model_tuning:
         gridsearchcv = ModelTuner(get_repo_root() + '/results/', random_seed, X_train_val, Y_train_val, test_x=test_X, test_y=test_Y, name='gridsearchcv', target_scaler=ss_target, ps=ps, models_pipe=models, params=param_grids)
-        best_model_df, validation_curve_blob, learning_curve_blob = gridsearchcv.do_gridsearchcv()
+        
+        best_model_df, validation_curve_blob, learning_curve_blob = gridsearchcv.do_gridsearchcv(validation_curves=False, learning_curves=False)
 
-        print(best_model_df.head(5))
         mse_dict = {x:y for x,y in zip(best_model_df['model'].to_list(), best_model_df['best_score'].to_list())}
 
         # Generate validation, learning, and model comparison plots
@@ -172,43 +167,104 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
         best_params = best_model_df['best_param'][0]
         best_estimator = best_model_df['best_estimator'][0]
         
-        print(best_params)
-        print(best_estimator)
-
         best_model = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='best_tuned_model', target_scaler=ss_target)
         best_model.construct_model(best_estimator)
         best_model.set_params(best_params)
         best_model.train()
-        my_model = best_model.get_model()
         
         # Save model
-        best_model.save_model(get_repo_root() + '/results/best_model.pkl', my_model)
+        if save_model:
+            best_model.save_model(get_repo_root() + '/results/best_params.pkl', best_params)
+            best_model.save_model(get_repo_root() + '/results/best_estimator.pkl', str(best_estimator))
 
-        # Load model
-    if load_model:
-        my_model = best_model.load_model(get_repo_root() + '/results/best_model.pkl')
     else:
-        my_model = best_model
+        # Load model
+        loaded_model = Model(random_seed, name='loaded_model')
+        best_params = loaded_model.load_model(get_repo_root() + '/results/best_params.pkl')
+        best_estimator = loaded_model.load_model(get_repo_root() + '/results/best_estimator.pkl')
+        best_estimator = eval(best_estimator)
+
+        # Best model already found, don't just load best_model.pkl (already trained model), because the fully trained model is huge so can't upload easily to GitHub.
+        # Load the untrained model and parameters and reconstruct and train
+        best_model = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='best_tuned_model', target_scaler=ss_target)
+        best_model.construct_model(best_estimator)
+        best_model.set_params(best_params)
+        best_model.train()
 
     ####################################################
     # 5) Evaluate best model
     ####################################################
+    my_model = best_model.get_model()
     model_to_use = Model(random_seed, X_train_val, Y_train_val, val_x=None, val_y=None, test_x=test_X, test_y=test_Y, name='best_tuned_model', target_scaler=ss_target)
     model_to_use.construct_model(my_model)
-    model_to_use.evaluate(test_X)
+    test_Y_predicted = model_to_use.evaluate(test_X)
+    test_Y_predicted = ss_target.inverse_transform(test_Y_predicted.reshape(-1,1))
     
     # Calculate MSE & error in context
     rmse, mse = model_to_use.get_error(test_X, test_Y)
     rmse_ctxt, mse_ctxt = model_to_use.get_error_in_context(test_X, test_Y)
 
+    ####################################################
+    # 6) Results Evaluation:
+        # Look at feature importance
+        # Better than randomly guessing?
+    ####################################################
+    # Generate feature importance plot
+    results_eval = Plotter(get_repo_root() + '/results/model_plots/', name='Results Evaluation', savename='results_eval')
+    results_eval.most_important_features(train_df=df_train.iloc[:,:-1], model=model_to_use.model, show=False, saveplot=True)
+
+    # Better than random test
+    test_Y_random = np.random.uniform(1, 10, size=test_Y.shape)
+
+    # Check for normality, Shapiro-Wilk Test: Null hypothesis that data was drawn from normal distribution
+    test_Y_random_normality = shapiro(test_Y_random.reshape(-1,1))
+    test_Y_predicted_normality = shapiro(test_Y_predicted.reshape(-1,1))
+
+    # Check equal variance, Bartlett Test: Null hypothesis that all input samples are from populations with equal variances (Levene's test for non-normal populations)
+    bartlett_test = bartlett(test_Y_random.reshape(-1), test_Y_predicted.reshape(-1))
+
+    # Check distributions are independent, 2 Sample T-Test: Null hypothesis that means are equal
+    t_test = ttest_ind(test_Y_random.reshape(-1,1), test_Y_predicted.reshape(-1,1), equal_var=True)
+    
+    # Check distributions are independent: Mann-Whitney Wilcox Test: Null hypothesis that medians are equal, non-parametric
+    mannwhitney_test = mannwhitneyu(test_Y_random.reshape(-1,1), test_Y_predicted.reshape(-1,1))
+
+    # Calculate MSE & error for random model
+    mse_ctxt_random = mean_squared_error(ss_target.inverse_transform(test_Y.reshape(-1,1)), test_Y_random.reshape(-1,1))
+    
+    rmse_ctxt_random = np.sqrt(mse_ctxt_random)
+
+    print('RMSE for Random Model: {}'.format(rmse_ctxt_random))
+    print('MSE for Random Model: {}'.format(mse_ctxt_random))
+
     # Save results
-    evaluation_results = {'Pure Error RMSE':rmse, 'Pure Error MSE': mse, 'Error in Context RMSE':rmse_ctxt, 'Error in Context MSE':mse_ctxt}
+    evaluation_results = {'Pure Error RMSE':rmse, 
+                          'Pure Error MSE': mse, 
+                          'Error in Context RMSE':rmse_ctxt, 
+                          'Error in Context MSE':mse_ctxt,
+                          'Error in Context RMSE - Random':rmse_ctxt_random, 
+                          'Error in Context MSE - Random':mse_ctxt_random,
+                          'Shapiro-Wilk Test Statistic - Predicted':test_Y_predicted_normality.statistic,
+                          'Shapiro-Wilk Test P Value - Predicted':test_Y_predicted_normality.pvalue,
+                          'Shapiro-Wilk Test Statistic - Random':test_Y_random_normality.statistic,
+                          'Shapiro-Wilk Test P Value - Random':test_Y_random_normality.pvalue,
+                          'Bartlett Test Statistic - Predicted vs Random':bartlett_test.statistic,
+                          'Bartlett Test P Value - Predicted vs Random':bartlett_test.pvalue,
+                          'T Test Statistic - Predicted vs Random':t_test.statistic,
+                          'T Test P Value - Predicted vs Random':t_test.pvalue,
+                          'Mann-Whitney U rank test Test Statistic - Predicted vs Random':mannwhitney_test.statistic,
+                          'Mann-Whitney U rank test Test P Value - Predicted vs Random':mannwhitney_test.pvalue,
+                          }
+
     evaluation_results_df = pd.DataFrame(evaluation_results.items(), columns=['Score Type', 'Score'])
     evaluation_results_df.to_csv(get_repo_root() + '/results/best_model_evaluation_results.csv', index=False)
 
-    ####################################################
-    # 6) Better than random? + Look at feature importance(?)
-    ####################################################
+    plot_eval_results = {'Model':['Our Model', 'Random Model'], 'MSE':[mse_ctxt, mse_ctxt_random]}
+    results_eval.vs_random_bar(plot_eval_results, show=False, saveplot=True)
+
+    test_Y = ss_target.inverse_transform(test_Y.reshape(-1,1))
+    prediction_results = pd.DataFrame(np.hstack((test_Y.reshape(-1,1), test_Y_predicted.reshape(-1,1), test_Y_random.reshape(-1,1))), columns=['Actual Rating', 'Predicted Rating', 'Random Rating'])
+    prediction_results.to_csv(get_repo_root() + '/results/prediction_results.csv', index=False)
 
     return
 

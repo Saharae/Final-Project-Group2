@@ -2,6 +2,7 @@
 IMDb*.csv
 data/
 results/
+results_old/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
