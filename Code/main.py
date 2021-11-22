@@ -37,18 +37,21 @@ if __name__ == "__main__":
 
     # Data preprocessing
     print('Doing preprocessing...')
-    #df_train, df_test, df_val, ss_target, df = pre.preprocess()
+    df_train, df_test, df_val, ss_target, df = pre.preprocess(ratings, movies, names, title_principals, inflation)
 
     # EDA
     print('Doing EDA...')
-    #x = eda.plot_duration(df)
+    # come back to this?
+    #ax = eda.plot_duration(df)
 
     # Modeling
     print('Doing modeling...')
-    #mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, run_base_estimators = False, run_model_tuning = True, load_model = True)
+    # mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, run_base_estimators = False, run_model_tuning = True, load_model = True)
+
 
     # GUI
     print('Creating the GUI')
+    gui.plot(df)
     app = QApplication(sys.argv)  # creates the PyQt5 application
     mn = gui.Menu()  # Creates the menu
     sys.exit(app.exec_())  # Close the application

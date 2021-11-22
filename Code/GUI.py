@@ -5,6 +5,7 @@ Created on Fri Nov  5 17:04:12 2021
 @author: adamkritz
 """
 
+import matplotlib.pyplot as plt
 import sys
 from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QApplication
 
@@ -35,6 +36,14 @@ from PyQt5.QtCore import QSize
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar 
 from matplotlib.figure import Figure 
+import seaborn as sns
+
+r = 0
+
+def plot(x):
+    global r
+    r = x
+
 
 ### The way this works:
 ### Each class is a separate window. Within each class you can define how you want
@@ -118,7 +127,7 @@ class NumericalVars(QMainWindow):
 
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(1000, 1000)                         # Resize the window
-
+    
     def onClicked(self):
         if self.b1.isChecked():
             self.label.setText('The length of the movie')
@@ -129,6 +138,10 @@ class NumericalVars(QMainWindow):
         if self.b2.isChecked():
             self.label.setText('The budget for the movie')
             self.ax1.clear()
+            sns.histplot(data = r, x = 'duration', ax = self.ax1, kde = True, bins = 75)
+            self.ax1.set_xlim((0, 300))
+            self.ax1.set_title('Distribution of Movie Durrations')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
         if self.b3.isChecked():
@@ -682,3 +695,6 @@ class Menu(QMainWindow):
 #:: Application starts here
 #::------------------------
 
+#app = QApplication(sys.argv)  # creates the PyQt5 application
+#mn = Menu()  # Creates the menu
+#sys.exit(app.exec_())

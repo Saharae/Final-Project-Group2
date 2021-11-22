@@ -44,6 +44,8 @@ from matplotlib.figure import Figure
 ### All the functions at the bottom of the main window will open the other windows
 ### if they are clicked.
 
+x = [1,2,3,4,5,6,7,8,9,10]
+y = [1,2,3,4,5,6,7,8,9,10]
 # Numerical Variables Window 
 class NumericalVars(QMainWindow):
 
@@ -243,7 +245,7 @@ class CategoricalVars(QMainWindow):
         if self.b1.isChecked():
             self.label.setText('The amount of words in the title of the movie')
             self.ax1.clear()
-            self.ax1.scatter([1,2,3,4,5,6,7,8,9,10], [15,25,30,20,50,55,60,55,70,75])
+            self.ax1.scatter(x, y)
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
         if self.b2.isChecked():
