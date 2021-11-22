@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov 17 11:37:50 2021
+Created on Fri Nov  5 17:04:12 2021
 
 @author: adamkritz
 """
 
+import matplotlib.pyplot as plt
 import sys
 from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QApplication
-
+import webbrowser
 from PyQt5.QtWidgets import QSizePolicy
 
 from PyQt5.QtWidgets import QCheckBox    # checkbox
@@ -35,6 +36,14 @@ from PyQt5.QtCore import QSize
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar 
 from matplotlib.figure import Figure 
+import seaborn as sns
+
+r = 0
+
+def plot(x):
+    global r
+    r = x
+
 
 ### The way this works:
 ### Each class is a separate window. Within each class you can define how you want
@@ -44,8 +53,6 @@ from matplotlib.figure import Figure
 ### All the functions at the bottom of the main window will open the other windows
 ### if they are clicked.
 
-x = [1,2,3,4,5,6,7,8,9,10]
-y = [1,2,3,4,5,6,7,8,9,10]
 # Numerical Variables Window 
 class NumericalVars(QMainWindow):
 
@@ -120,7 +127,7 @@ class NumericalVars(QMainWindow):
 
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(1000, 1000)                         # Resize the window
-
+    
     def onClicked(self):
         if self.b1.isChecked():
             self.label.setText('The length of the movie')
@@ -131,6 +138,10 @@ class NumericalVars(QMainWindow):
         if self.b2.isChecked():
             self.label.setText('The budget for the movie')
             self.ax1.clear()
+            sns.histplot(data = r, x = 'duration', ax = self.ax1, kde = True, bins = 75)
+            self.ax1.set_xlim((0, 300))
+            self.ax1.set_title('Distribution of Movie Durrations')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
         if self.b3.isChecked():
@@ -245,7 +256,7 @@ class CategoricalVars(QMainWindow):
         if self.b1.isChecked():
             self.label.setText('The amount of words in the title of the movie')
             self.ax1.clear()
-            self.ax1.scatter(x, y)
+            self.ax1.scatter([1,2,3,4,5,6,7,8,9,10], [15,25,30,20,50,55,60,55,70,75])
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
         if self.b2.isChecked():
@@ -568,11 +579,23 @@ class Menu(QMainWindow):
         
         # exit tabs
         
+        file2Button = QAction("Link to our report", self)   
+        file2Button.setStatusTip("Here you can find the full report of our results")   
+        file2Button.triggered.connect(self.file2)    
+        
+        file3Button = QAction("About Us", self)   
+        file3Button.setStatusTip("Information about our project")   
+        file3Button.triggered.connect(self.file3)    
+        
+        
         exitButton = QAction(QIcon('enter.png'), '&Exit', self)
         exitButton.setShortcut('Ctrl+Q')
         exitButton.setStatusTip('Exit application')
         exitButton.triggered.connect(self.close)
-
+        
+        
+        fileMenu.addAction(file2Button)
+        fileMenu.addAction(file3Button)
         fileMenu.addAction(exitButton)
         
         # preprocessing tabs
@@ -633,7 +656,12 @@ class Menu(QMainWindow):
 
         self.show()
     
+    def file2(self):
+        webbrowser.open('http://www.google.com') # this will be our report
         
+    def file3(self):
+        QMessageBox.about(self, "About Us", "We created this project in Fall 2021 as part of our Intro to Data Mining Course at George Washington University.")
+    
     def preproc1(self):
         dialog = NumericalVars()
         self.dialogs.append(dialog) 
@@ -684,7 +712,7 @@ class Menu(QMainWindow):
 #:: Application starts here
 #::------------------------
 
-
-app = QApplication(sys.argv)  # creates the PyQt5 application
-mn = Menu()  # Creates the menu
-sys.exit(app.exec_())  # Close the application
+if __name__ == "__main__":
+    app = QApplication(sys.argv)  # creates the PyQt5 application
+    mn = Menu()  # Creates the menu
+    sys.exit(app.exec_())

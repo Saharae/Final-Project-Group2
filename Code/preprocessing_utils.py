@@ -717,12 +717,13 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
 
     return df_train, df_test, df_val, ss_target, df
 
-def preprocess(test_size = 0.15, val_size = 0.15):
-    base = get_repo_root()
-    ratings, movies, names, inflation, title_principals = load_all(base)
+def preprocess(ratings, movies, names, title_principals, inflation):
     inflation_clean = clean_inflation(inflation)
     movies = merge_and_clean_movies(movies, ratings, inflation_clean)
     names = merge_and_clean_names(names, title_principals)
+    
+    test_size = 0.15
+    val_size = 0.15
 
     df_train, df_test, df_val = get_train_test_val(movies, test_size = test_size, val_size = val_size)
     df_train, df_test, df_val, ss_target, df = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
