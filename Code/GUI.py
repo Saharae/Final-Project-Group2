@@ -8,7 +8,7 @@ Created on Fri Nov  5 17:04:12 2021
 import matplotlib.pyplot as plt
 import sys
 from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QApplication
-
+import webbrowser
 from PyQt5.QtWidgets import QSizePolicy
 
 from PyQt5.QtWidgets import QCheckBox    # checkbox
@@ -579,11 +579,23 @@ class Menu(QMainWindow):
         
         # exit tabs
         
+        file2Button = QAction("Link to our report", self)   
+        file2Button.setStatusTip("Here you can find the full report of our results")   
+        file2Button.triggered.connect(self.file2)    
+        
+        file3Button = QAction("About Us", self)   
+        file3Button.setStatusTip("Information about our project")   
+        file3Button.triggered.connect(self.file3)    
+        
+        
         exitButton = QAction(QIcon('enter.png'), '&Exit', self)
         exitButton.setShortcut('Ctrl+Q')
         exitButton.setStatusTip('Exit application')
         exitButton.triggered.connect(self.close)
-
+        
+        
+        fileMenu.addAction(file2Button)
+        fileMenu.addAction(file3Button)
         fileMenu.addAction(exitButton)
         
         # preprocessing tabs
@@ -644,7 +656,12 @@ class Menu(QMainWindow):
 
         self.show()
     
+    def file2(self):
+        webbrowser.open('http://www.google.com') # this will be our report
         
+    def file3(self):
+        QMessageBox.about(self, "About Us", "We created this project in Fall 2021 as part of our Intro to Data Mining Course at George Washington University.")
+    
     def preproc1(self):
         dialog = NumericalVars()
         self.dialogs.append(dialog) 
@@ -695,6 +712,7 @@ class Menu(QMainWindow):
 #:: Application starts here
 #::------------------------
 
-#app = QApplication(sys.argv)  # creates the PyQt5 application
-#mn = Menu()  # Creates the menu
-#sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)  # creates the PyQt5 application
+    mn = Menu()  # Creates the menu
+    sys.exit(app.exec_())
