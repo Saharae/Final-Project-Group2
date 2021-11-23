@@ -33,12 +33,17 @@ if __name__ == "__main__":
     print('Executing', __name__)
     # Run data download and setup
     print('Downloading Data (this may take around a minute)')
-    ratings, movies, names, title_principals, inflation = down.downloader()
+
+    # temp try except block just to prevent hitting limits form data downloader
+    try:
+        ratings, movies, names, title_principals, inflation = down.downloader()
+    except:
+        ratings, movies, names, title_principals, inflation = pre.load_all(pre.get_repo_root())
 
     # Data preprocessing
     print('Doing preprocessing...')
-    df_train, df_test, df_val, ss_target, df = pre.preprocess(ratings, movies, names, title_principals, inflation)
-
+    df_train, df_test, df_val, ss_target, df, df_test_untouched = pre.preprocess(ratings, movies, names, title_principals, inflation)
+    
     # EDA
     print('Doing EDA...')
     # come back to this?
@@ -55,7 +60,7 @@ if __name__ == "__main__":
     # run_model_tuning = False will take roughly 
     
     # Make sure you have results/ directory from GitHub is unzipped if running run_model_tuning as False
-    mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, 
+    mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched,
                              run_base_estimators = False, #Run base models comparison or not
                              run_model_tuning = False, #Run hyperparameter tuning and gridsearchcv or not
                              fast_gridsearch = True, #Skip most of gridsearchcv to run faster
