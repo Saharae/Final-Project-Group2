@@ -12,13 +12,20 @@ from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,Ada
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error
 
-def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33, run_base_estimators = False, run_model_tuning = False, fast_gridsearch = True, save_model = False):
+def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched, random_seed = 33, run_base_estimators = False, run_model_tuning = False, fast_gridsearch = True, save_model = False):
     '''
     '''
 
     ####################################################
     # 1) Dataset object instantiation and check for most important features to use
     ####################################################
+    df_test_ids = df_test[['imdb_title_id', 'weighted_average_vote']]
+    df_test_ids['Inverse Transformed Weighted Avg Vote'] = ss_target.inverse_transform(df_test_ids['weighted_average_vote'].values.reshape(-1,1)).reshape(-1)
+
+    df_train.drop('imdb_title_id', axis=1, inplace=True)
+    df_val.drop('imdb_title_id', axis=1, inplace=True)
+    df_test.drop('imdb_title_id', axis=1, inplace=True)
+
     data = Dataset(df_train, df_test, df_val, random_seed, label='weighted_average_vote')
     data.split_features_target()
     data.data_as_arrays()
@@ -256,6 +263,7 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
                           'Mann-Whitney U rank test Test P Value - Predicted vs Random':mannwhitney_test.pvalue,
                           }
 
+    # Scores and other model evaluation results
     evaluation_results_df = pd.DataFrame(evaluation_results.items(), columns=['Score Type', 'Score'])
     evaluation_results_df.to_csv(get_repo_root() + '/results/best_model_evaluation_results.csv', index=False)
 
@@ -263,8 +271,19 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, random_seed = 33,
     results_eval.vs_random_bar(plot_eval_results, show=False, saveplot=True)
 
     test_Y = ss_target.inverse_transform(test_Y.reshape(-1,1))
+    
+    # Actual, Predicted, Random
     prediction_results = pd.DataFrame(np.hstack((test_Y.reshape(-1,1), test_Y_predicted.reshape(-1,1), test_Y_random.reshape(-1,1))), columns=['Actual Rating', 'Predicted Rating', 'Random Rating'])
     prediction_results.to_csv(get_repo_root() + '/results/prediction_results.csv', index=False)
+    
+    # Un-processed features, Actual, Predicted, Random
+    predictions_with_ids = pd.DataFrame(np.hstack((df_test_ids.values, prediction_results.values)), columns=['imdb_title_id','weighted_average_vote','Inverse Transformed Weighted Avg Vote','Actual Rating','Predicted Rating','Random Rating'])
+    
+    df_test_untouched['imdb_title_id'] = df_test_untouched['imdb_title_id'].astype(str)
+    predictions_with_ids['imdb_title_id'] = predictions_with_ids['imdb_title_id'].astype(str)
+
+    predictions_with_ids = predictions_with_ids.merge(df_test_untouched, on='imdb_title_id', how='inner')
+    predictions_with_ids.to_csv(get_repo_root() + '/results/predictions_with_ids.csv', index=False)
 
     return
 

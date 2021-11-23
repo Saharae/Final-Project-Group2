@@ -635,6 +635,11 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     # combine data for some transformations
     df = pd.concat([df_train, df_val, df_test], sort = False)
 
+    # Keep copy with IMDB_ids needed later to map back predictions
+    df_test_untouched = df_test.copy()
+    df_test_untouched.drop('males_allages_avg_vote', axis=1, inplace=True)
+    df_test_untouched.drop('females_allages_avg_vote', axis=1, inplace=True)
+
     # DATE TRANSFORM
     df = expand_date(df, col_to_expand = 'date_published', keep_original = False)
 
@@ -649,11 +654,6 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df = transform_production_company_frequency(df, production_company_fitted)
     
     # Encode genres
-    # bin_df = binary_encoder_fit(df_train, ['genre1', 'genre2', 'genre3'])
-    # df = binary_encoder_transform(df, bin_df, col_name='genre1')
-    # df = binary_encoder_transform(df, bin_df, col_name='genre2')
-    # df = binary_encoder_transform(df, bin_df, col_name='genre3')
-
     bin_df = binary_encoder_fit(df_train, col_name='genre')
     df = binary_encoder_transform(df, bin_df, col_name='genre')
 
@@ -681,7 +681,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df = pd.get_dummies(df, columns = ['region'])
 
     # Needed this id for getting frequencies, can drop after done.
-    df.drop('imdb_title_id', axis=1, inplace=True)
+    # df.drop('imdb_title_id', axis=1, inplace=True)
     df.drop('males_allages_avg_vote', axis=1, inplace=True)
     df.drop('females_allages_avg_vote', axis=1, inplace=True)
 
@@ -703,7 +703,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     ss_target = StandardScaler()
 
     #numerical features until the cat is transformed
-    vars_to_standardize = np.array(df_train.columns.drop(['weighted_average_vote']))
+    vars_to_standardize = np.array(df_train.columns.drop(['weighted_average_vote','imdb_title_id']))
 
     # Scale features
     df_train.loc[:,vars_to_standardize] = ss_features.fit_transform(df_train[vars_to_standardize])
@@ -715,7 +715,7 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     df_test['weighted_average_vote'] = ss_target.transform(df_test['weighted_average_vote'].values.reshape(-1,1)).reshape(-1).tolist()
     df_val['weighted_average_vote'] = ss_target.transform(df_val['weighted_average_vote'].values.reshape(-1,1)).reshape(-1).tolist()
 
-    return df_train, df_test, df_val, ss_target, df
+    return df_train, df_test, df_val, ss_target, df, df_test_untouched
 
 def preprocess(ratings, movies, names, title_principals, inflation):
     inflation_clean = clean_inflation(inflation)
@@ -726,9 +726,9 @@ def preprocess(ratings, movies, names, title_principals, inflation):
     val_size = 0.15
 
     df_train, df_test, df_val = get_train_test_val(movies, test_size = test_size, val_size = val_size)
-    df_train, df_test, df_val, ss_target, df = autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
+    df_train, df_test, df_val, ss_target, df, df_test_untouched= autobots_assemble(df_train, df_test, df_val, names, target = ['weighted_avg_vote'])
 
-    return df_train, df_test, df_val, ss_target, df
+    return df_train, df_test, df_val, ss_target, df, df_test_untouched
 
 if __name__ == "__main__":
     print('Executing', __name__)
@@ -745,3 +745,6 @@ if __name__ == "__main__":
     print(df_train.head())
 else:
     print('Importing:', __name__)
+
+# just so I don't keep losing this line. delete later
+# percent_missing = df.isnull().sum() * 100 / len(df)
