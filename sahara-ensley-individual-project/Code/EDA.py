@@ -93,3 +93,30 @@ def plot_region_count(df):
     ax.set_ylabel('Count')
     sns.despine()
     return fig, ax
+
+def corr_plot(df):
+    fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = (10, 8))
+    sns.heatmap(df[['duration', 'weighted_average_vote', 'budget_adjusted',
+                    'usa_gross_income_adjusted', 'worldwide_gross_income_adjusted',
+                    'date_published_year', 'date_published_month', 'date_published_day',
+                    'actors_weighted_frequency', 'director_weighted_frequency',
+                    'writer_weighted_frequency', 'production_company_frequency', 'title_n_words',
+                    'title_ratio_long_words', 'title_ratio_vowels',
+                    'title_ratio_capital_letters', 'description_n_words',
+                    'description_ratio_long_words', 'description_ratio_vowels',
+                    'description_ratio_capital_letters', ]].corr(), vmin = -1, vmax = 1, ax = ax, cmap = 'coolwarm')
+
+    ax.set_title('Correlation Matrix of Numeric Variables')
+    return fig, ax
+
+def stats(df):
+    stats = df.describe().T
+    percent_missing = pd.DataFrame(df.isnull().sum() * 100 / len(df)).reset_index().rename(columns = {'index': 'var', 0: 'perc'})
+    stats['perc_null'] = percent_missing['perc'].to_numpy()
+    stats['count_encoded'] = df.sum().to_numpy()
+    stats.loc[
+        ['duration', 'weighted_average_vote', 'budget_adjusted', 'usa_gross_income_adjusted', 'worldwide_gross_income_adjusted', 'date_published_year', 'date_published_month', 'date_published_day', 'actors_weighted_frequency', 'director_weighted_frequency', 'writer_weighted_frequency', 'production_company_frequency', 'title_n_words', 'title_ratio_long_words', 'title_ratio_vowels', 'title_ratio_capital_letters', 'description_n_words', 'description_ratio_long_words', 'description_ratio_vowels',
+         'description_ratio_capital_letters'], ['count_encoded']] = np.nan
+    stats['corr'] = df.corr()['weighted_average_vote'].to_numpy()
+    stats.loc[['genre_1', 'genre_2', 'genre_3', 'genre_4', 'genre_5', 'genre_6', 'genre_7', 'genre_8', 'genre_9', 'genre_10', 'region_Africa', 'region_Americas', 'region_Asia', 'region_Europe', 'region_None', 'region_Oceania'], ['corr']] = np.nan
+    return stats
