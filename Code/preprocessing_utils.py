@@ -37,6 +37,37 @@ def get_repo_root():
     
     return current_path
 
+
+def get_repo_root_w():
+    '''
+    Function to get the repo base path of '.../Final-Project-Group2' so anyone can run.
+
+    Takes into account the case of running the code directly outside the repo.
+    Paramaters
+    ----------
+    None
+
+    Return
+    ----------
+    None
+    '''
+    repo_name = 'Final-Project-Group2'
+    current_path = os.path.abspath(__file__)
+    current_path_list = current_path.split('\\')
+    try:
+        repo_index = current_path_list.index(repo_name)
+    except ValueError as err:
+        repo_index = -2
+    current_path_list = current_path_list[:repo_index+1]
+    current_path = '\\'.join(current_path_list)
+
+    if 'Final-Project-Group2' not in current_path:
+        current_path+='\\Final-Project-Group2'
+    
+    return current_path
+
+
+
 def load_all(base):
     ratings = pd.read_csv(f'{base}/data/IMDb ratings.csv')
     movies = pd.read_csv(f'{base}/data/IMDb movies.csv')
