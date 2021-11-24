@@ -45,7 +45,11 @@ def downloader():
     path5 = 'https://drive.google.com/uc?export=download&id='+InflationURL.split('/')[-2]
     inflation = pd.read_csv(path5)
     
-    return ratings, movies, names, title_principals, inflation
+    predURL = 'https://drive.google.com/file/d/1TybrmIpx6ClZdlzCllrFZ4jJljx_pIaQ/view?usp=sharing'
+    path6 = 'https://drive.google.com/uc?export=download&id='+predURL.split('/')[-2]
+    pred = pd.read_csv(path6)
+    
+    return ratings, movies, names, title_principals, inflation, pred
     
 
     

@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov 17 11:37:50 2021
+Created on Fri Nov  5 17:04:12 2021
 
 @author: adamkritz
 """
 
+import matplotlib.pyplot as plt
+import pandas as pd
 import sys
 from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QApplication
-
+import webbrowser
 from PyQt5.QtWidgets import QSizePolicy
 
 from PyQt5.QtWidgets import QCheckBox    # checkbox
@@ -15,6 +17,8 @@ from PyQt5.QtWidgets import QPushButton  # pushbutton
 from PyQt5.QtWidgets import QLineEdit    # Lineedit
 from PyQt5.QtWidgets import QRadioButton # Radio Buttons
 from PyQt5.QtWidgets import QGroupBox    # Group Box
+
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem
 
 from numpy.polynomial.polynomial import polyfit
 import numpy as np
@@ -35,6 +39,22 @@ from PyQt5.QtCore import QSize
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar 
 from matplotlib.figure import Figure 
+import seaborn as sns
+from preprocessing_utils import get_repo_root
+from preprocessing_utils import get_repo_root_w
+import zipfile
+
+
+
+
+df = 0
+pred = 0
+
+def take(x, y):
+    global df
+    global pred
+    df = x
+    pred = y
 
 ### The way this works:
 ### Each class is a separate window. Within each class you can define how you want
@@ -44,8 +64,6 @@ from matplotlib.figure import Figure
 ### All the functions at the bottom of the main window will open the other windows
 ### if they are clicked.
 
-x = [1,2,3,4,5,6,7,8,9,10]
-y = [1,2,3,4,5,6,7,8,9,10]
 # Numerical Variables Window 
 class NumericalVars(QMainWindow):
 
@@ -69,32 +87,32 @@ class NumericalVars(QMainWindow):
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
 
-        self.groupBox3 = QGroupBox('Graphic')
+        self.groupBox3 = QGroupBox('Graphic 1')
         self.groupBox3Layout = QHBoxLayout()
-        self.groupBox3.setLayout(self.groupBox3Layout)# Creates vertical layout
+        self.groupBox3.setLayout(self.groupBox3Layout)
+        
+        self.groupBox4 = QGroupBox('Graphic 2')
+        self.groupBox4Layout = QHBoxLayout()
+        self.groupBox4.setLayout(self.groupBox4Layout)
+
 
         self.b1 = QRadioButton("Duration")
         self.b1.toggled.connect(self.onClicked)
-        self.layout.addWidget(self.b1)
+
 
         self.b2 = QRadioButton("Budget")
         self.b2.toggled.connect(self.onClicked)
-        self.layout.addWidget(self.b2)
 
         self.b3 = QRadioButton("World Wide Gross Income")
         self.b3.toggled.connect(self.onClicked)
-        self.layout.addWidget(self.b3)
         
         self.b4 = QRadioButton("USA Gross Income")
         self.b4.toggled.connect(self.onClicked)
-        self.layout.addWidget(self.b4)
         
         self.groupBox1Layout.addWidget(self.b1)
         self.groupBox1Layout.addWidget(self.b2)
         self.groupBox1Layout.addWidget(self.b3)
         self.groupBox1Layout.addWidget(self.b4)
-        
-        
         
         self.label = QLabel("")
         self.layout.addWidget(self.label)
@@ -106,43 +124,113 @@ class NumericalVars(QMainWindow):
         self.fig = Figure()
         self.ax1 = self.fig.add_subplot(111)
         self.canvas = FigureCanvas(self.fig)
-
-        self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        self.canvas.updateGeometry()
+    
+        
+        # second graph
+        
+        self.fig2 = Figure()
+        self.ax2 = self.fig2.add_subplot(111)
+        self.canvas2 = FigureCanvas(self.fig2)
+        
+        #self.toolbar = NavigationToolbar(self.canvas2, self)
         
         self.groupBox3Layout.addWidget(self.canvas)
+        
+        self.groupBox4Layout.addWidget(self.canvas2)
 
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
+        self.layout.addWidget(self.groupBox4)
         self.layout.addStretch(1)
 
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(1000, 1000)                         # Resize the window
-
+        self.resize(2000, 2000)                         # Resize the window
+    
     def onClicked(self):
         if self.b1.isChecked():
-            self.label.setText('The length of the movie')
+            mean = str(round(df['duration'].mean()))
+            std = str(round(df['duration'].std()))
+            self.label.setText('The duration of the movie. The mean is ' + mean + ' minutes and the standard deviation is ' + std + ' minutes.')
             self.ax1.clear()
-            self.ax1.scatter([1,2,3,4,5,6,7,8,9,10], [15,25,30,20,50,55,60,55,70,75])
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.hide()
+            sns.histplot(data = df, x = 'duration', ax = self.ax1, kde = True, bins = 75)
+            self.ax1.set_xlim((0, 300))
+            self.ax1.set_title('Distribution of Movie Durations')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
         if self.b2.isChecked():
-            self.label.setText('The budget for the movie')
+            mean = str(round(df['budget_adjusted'].mean()))
+            std = str(round(df['budget_adjusted'].std()))
+            self.label.setText('The budget for the movie. This has been adjusted for inflation. The mean is ' + mean + ' USD and the standard deviation is ' + std + ' USD.')
             self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.hide()
+            sns.histplot(data = df, x = 'budget_adjusted', ax = self.ax1, kde = True, log_scale = True)
+            self.ax1.set_title('Distribution of Movie Budget')
+            self.ax1.set_xlabel('Budget ($)')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
+            
         if self.b3.isChecked():
-            self.label.setText('The amount of money the movie made world-wide')
+            
+            mean = str(round(df['worldwide_gross_income_adjusted'].mean()))
+            std = str(round(df['worldwide_gross_income_adjusted'].std()))
+            
+            self.label.setText('The amount of money the movie made world-wide. This has been adjusted for inflation. The mean is ' + mean + ' USD and the standard deviation is ' + std + ' USD.')
             self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.show()
+            sns.histplot(data = df, x = 'worldwide_gross_income_adjusted', kde = True, ax = self.ax1, log_scale = True)
+            self.ax1.set_title('Distribution of Movie Income (Worldwide)')
+            self.ax1.set_xlabel('Worldwide Income ($)')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
+            
+            
+            p = sns.scatterplot(data = df, x = 'date_published_year', y = 'worldwide_gross_income_adjusted', alpha = 0.2, ax = self.ax2)
+            p.set(yscale = 'log')
+            self.ax2.set_title('Worldwide Gross Income by Date')
+            self.ax2.set_ylabel('Worldwide Gross Income ($)')
+            self.ax2.set_xlabel('Year Published')
+            sns.despine()
+            
+            self.fig2.tight_layout()
+            self.fig2.canvas.draw_idle()
+                
         if self.b4.isChecked():
-            self.label.setText('The amount of money the movie made in the United States')
+            
+            mean = str(round(df['usa_gross_income_adjusted'].mean()))
+            std = str(round(df['usa_gross_income_adjusted'].std()))
+
+            self.label.setText('The amount of money the movie made in the United States. This has been adjusted for inflation. The mean is ' + mean + ' USD and the standard deviation is ' + std + ' USD.')
             self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.show()
+            sns.histplot(data = df, x = 'usa_gross_income_adjusted', kde = True, ax = self.ax1,  log_scale = True)
+            self.ax1.set_title('Distribution of Movie Income (USA)')
+            self.ax1.set_xlabel('USA Income ($)')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
+            
+            p = sns.scatterplot(data = df, x = 'date_published_year', y = 'usa_gross_income_adjusted', alpha = 0.2, ax = self.ax2)
+            p.set(yscale = 'log')
+            self.ax2.set_title('USA Gross Income by Date')
+            self.ax2.set_ylabel('USA Gross Income ($)')
+            self.ax2.set_xlabel('Year Published')
+            sns.despine()
+            
+            self.fig2.tight_layout()
+            self.fig2.canvas.draw_idle()
 
             
 # Categorical Variables Window 
@@ -168,47 +256,43 @@ class CategoricalVars(QMainWindow):
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
 
-        self.groupBox3 = QGroupBox('Graphic')
+        self.groupBox3 = QGroupBox('Graphic 1')
         self.groupBox3Layout = QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)# Creates vertical layout
+        
+        self.groupBox4 = QGroupBox('Graphic 2')
+        self.groupBox4Layout = QHBoxLayout()
+        self.groupBox4.setLayout(self.groupBox4Layout)
 
         self.b1 = QRadioButton("Title")
         self.b1.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b1)
 
         self.b2 = QRadioButton("Date Published")
         self.b2.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b2)
 
         self.b3 = QRadioButton("Genre")
         self.b3.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b3)
         
-        self.b5 = QRadioButton("Country")
+        self.b5 = QRadioButton("Region")
         self.b5.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b5)
         
-        self.b6 = QRadioButton("Director")
+        self.b6 = QRadioButton("Director Frequency")
         self.b6.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b6)
         
-        self.b7 = QRadioButton("Writer")
+        self.b7 = QRadioButton("Writer Frequency")
         self.b7.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b7)
         
-        self.b8 = QRadioButton("Production Company")
+        self.b8 = QRadioButton("Production Company Frequency")
         self.b8.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b8)
         
-        self.b9 = QRadioButton("Actors")
+        self.b9 = QRadioButton("Actor Frequency")
         self.b9.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b9)
-        
+
         self.b10 = QRadioButton("Description")
         self.b10.toggled.connect(self.onClicked2)
-        self.layout.addWidget(self.b10)
         
         self.groupBox1Layout.addWidget(self.b1)
+        self.groupBox1Layout.addWidget(self.b10)
         self.groupBox1Layout.addWidget(self.b2)
         self.groupBox1Layout.addWidget(self.b3)
         self.groupBox1Layout.addWidget(self.b5)
@@ -216,7 +300,6 @@ class CategoricalVars(QMainWindow):
         self.groupBox1Layout.addWidget(self.b7)
         self.groupBox1Layout.addWidget(self.b8)
         self.groupBox1Layout.addWidget(self.b9)
-        self.groupBox1Layout.addWidget(self.b10)
         
         self.label = QLabel("")
         self.layout.addWidget(self.label)
@@ -225,16 +308,25 @@ class CategoricalVars(QMainWindow):
         self.fig = Figure()
         self.ax1 = self.fig.add_subplot(111)
         self.canvas = FigureCanvas(self.fig)
-
-        self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        self.canvas.updateGeometry()
+    
+        
+        # second graph
+        
+        self.fig2 = Figure()
+        self.ax2 = self.fig2.add_subplot(111)
+        self.canvas2 = FigureCanvas(self.fig2)
+        
+        #self.toolbar = NavigationToolbar(self.canvas2, self)
         
         self.groupBox3Layout.addWidget(self.canvas)
+        
+        self.groupBox4Layout.addWidget(self.canvas2)
+
 
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
+        self.layout.addWidget(self.groupBox4)
         self.layout.addStretch(1)
 
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
@@ -243,51 +335,167 @@ class CategoricalVars(QMainWindow):
 
     def onClicked2(self):
         if self.b1.isChecked():
-            self.label.setText('The amount of words in the title of the movie')
+            mean = str(round(df['title_n_words'].mean()))
+            std = str(round(df['title_n_words'].std()))
+            self.label.setText('Having to do with the title of the movie. This includes: number of words in the title, the ratio of long words to short words, the ratio of vowels to not vowels, and the ratio of capital letters to lowercase letters. \nHere are two plot on the number of words and the ratio of long words. For our purposes, these will be treated as categorical variables. The mean number of words in the title is ' + mean +' and the standard deviation is ' + std + '.')
             self.ax1.clear()
-            self.ax1.scatter(x, y)
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.show()
+            sns.countplot(data = df, x = 'title_n_words', ax = self.ax1)
+            self.ax1.set_title('Number of Words in Title')
+            self.ax1.set_xlabel('Number of Words')
+            self.ax1.set_ylabel('Frequency')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
-        if self.b2.isChecked():
-            self.label.setText('The date the movie released')
-            self.ax1.clear()
-            self.fig.tight_layout()
-            self.fig.canvas.draw_idle()
-        if self.b3.isChecked():
-            self.label.setText('The genre of the movie')
-            self.ax1.clear()
-            self.fig.tight_layout()
-            self.fig.canvas.draw_idle()
-        if self.b5.isChecked():
-            self.label.setText('The country the movie was initially released in')
-            self.ax1.clear()
-            self.fig.tight_layout()
-            self.fig.canvas.draw_idle()
-        if self.b6.isChecked():
-            self.label.setText('description for director')
-            self.ax1.clear()
-            self.fig.tight_layout()
-            self.fig.canvas.draw_idle()
-        if self.b7.isChecked():
-            self.label.setText('description for writer')
-            self.ax1.clear()
-            self.fig.tight_layout()
-            self.fig.canvas.draw_idle()
-        if self.b8.isChecked():
-            self.label.setText('description for prodcution company')
-            self.ax1.clear()
-            self.fig.tight_layout()
-            self.fig.canvas.draw_idle()
-        if self.b9.isChecked():
-            self.label.setText('description for actors')
-            self.ax1.clear()
-            self.fig.tight_layout()
-            self.fig.canvas.draw_idle()
+        
+            sns.histplot(data = df, x = 'title_ratio_long_words', ax = self.ax2, bins = 10)
+            self.ax2.set_title('Ratio of Long Words to Short Words in the Title')
+            self.ax2.set_xlabel('Ratio')
+            self.ax2.set_ylabel('Frequency')
+            sns.despine()
+            self.fig2.tight_layout()
+            self.fig2.canvas.draw_idle()
+            
         if self.b10.isChecked():
-            self.label.setText('description for description')
+            mean = str(round(df['description_n_words'].mean()))
+            std = str(round(df['description_n_words'].std()))
+            self.label.setText('Having to do with the IMDb description of the movie. This is similar to title, and includes: number of words in the description, the ratio of long words to short words, the ratio of vowels to not vowels, and the ratio of capital letters to lowercase letters. \nHere are two plot on the number of words and the ratio of long words. For our purposes, these will be treated as categorical variables. The mean number of words in the description is ' + mean +' and the standard deviation is ' + std + '.')
             self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.show()
+            sns.countplot(data = df, x = 'description_n_words', ax = self.ax1)
+            self.ax1.set_title('Number of Words in Description')
+            self.ax1.set_xlabel('Number of Words')
+            self.ax1.set_ylabel('Frequency')
+            sns.despine()
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
+        
+            sns.histplot(data = df, x = 'description_ratio_long_words', ax = self.ax2, bins = 10)
+            self.ax2.set_title('Ratio of Long Words to Short Words in the Description')
+            self.ax2.set_xlabel('Ratio')
+            self.ax2.set_ylabel('Frequency')
+            sns.despine()
+            self.fig2.tight_layout()
+            self.fig2.canvas.draw_idle()
+            
+        if self.b2.isChecked():
+            self.label.setText('The date the movie released. This includes the year, month, and day of release. Here are two plots on the year and month of release.')
+            self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.show()
+            sns.histplot(data = df, x = 'date_published_year', ax = self.ax1)
+            self.ax1.set_title('Year Released')
+            self.ax1.set_xlabel('Year')
+            self.ax1.set_ylabel('Frequency')
+            sns.despine()
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+            
+            sns.countplot(data = df, x = 'date_published_month', ax = self.ax2)
+            self.ax2.set_title('Month Released')
+            self.ax2.set_xlabel('Month')
+            self.ax2.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',' Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+            self.ax2.set_ylabel('Frequency')
+            sns.despine()
+            self.fig2.tight_layout()
+            self.fig2.canvas.draw_idle()
+            
+        if self.b3.isChecked():
+            self.label.setText('The genre of the movie. IMDb gives each movie 3 genres, resulting in many possible genre combinations. There are also many different genres that movies can have, further increasing the number of genres. \nBecause of this, we decided to binary encode the genres, as we could not easily represent each one otherwise. This results in 732 combinations of genres that we will use.')
+            self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.hide()
+            self.groupBox4.hide()
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+            
+        if self.b5.isChecked():
+            self.label.setText('The region the movie was initially released in. The six regions are: Africa, Americas, Asia, Europe, Oceania, and None of the above/No region recorded.')
+            af = df['region_Africa'].value_counts()[1]
+            am = df['region_Americas'].value_counts()[1]
+            asi = df['region_Asia'].value_counts()[1]
+            eu = df['region_Europe'].value_counts()[1]
+            oc = df['region_Oceania'].value_counts()[1]
+            no = df['region_None'].value_counts()[1]
+            vals = [af, am, asi, eu, oc, no]
+            names = ['Africa', 'America', 'Asia', 'Europe', 'Oceania', 'None']
+            self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.hide()
+            self.ax1.bar(names, height = vals)
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+            
+        if self.b6.isChecked():
+            mean = str(round(df['director_weighted_frequency'].mean()))
+            std = str(round(df['director_weighted_frequency'].std()))
+            self.label.setText('The frequency of director appearance. This variable measures how often a director directs a movie compared to other directors. For our purposes, this will be represented as a categorical variable. The mean frequency is ' + mean + ' and the standard deviation is ' + std + '.')
+            self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.hide()
+            sns.histplot(data = df, x = 'director_weighted_frequency', ax = self.ax1, bins = 20)
+            self.ax1.set_title('Director Frequency Histogram')
+            self.ax1.set_xlabel('Directory Frequency')
+            self.ax1.set_ylabel('Frequency (Count)')
+            sns.despine()
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+            
+        if self.b7.isChecked():
+            mean = str(round(df['writer_weighted_frequency'].mean()))
+            std = str(round(df['writer_weighted_frequency'].std()))
+            self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.hide()
+            self.label.setText('The frequency of writer appearance. This variable measures how often a writer writes a movie compared to other writer. For our purposes, this will be represented as a categorical variable. The mean frequency is ' + mean + ' and the standard deviation is ' + std + '.')
+            sns.histplot(data = df, x = 'writer_weighted_frequency', ax = self.ax1, bins = 20)
+            self.ax1.set_title('Writer Frequency Histogram')
+            self.ax1.set_xlabel('Writer Frequency')
+            self.ax1.set_ylabel('Frequency (Count)')
+            sns.despine()
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+            
+        if self.b8.isChecked():
+            mean = str(round(df['production_company_frequency'].mean()))
+            std = str(round(df['production_company_frequency'].std()))
+            self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.hide()
+            self.label.setText('The frequency of production company appearance. This variable measures how often a production company produces a movie compared to other production companies. For our purposes, this will be represented as a categorical variable. The mean frequency is ' + mean + ' and the standard deviation is ' + std + '.')
+            sns.histplot(data = df, x = 'production_company_frequency', ax = self.ax1, bins = 20)
+            self.ax1.set_title('Production Company Frequency Histogram')
+            self.ax1.set_xlabel('Production Company Frequency')
+            self.ax1.set_ylabel('Frequency (Count)')
+            sns.despine()
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+            
+        if self.b9.isChecked():
+            mean = str(round(df['actors_weighted_frequency'].mean()))
+            std = str(round(df['actors_weighted_frequency'].std()))
+            self.ax1.clear()
+            self.ax2.clear()
+            self.groupBox3.show()
+            self.groupBox4.hide()
+            self.label.setText('The frequency of actor appearance. This variable measures how often a actor acts in a movie compared to other actors. For our purposes, this will be represented as a categorical variable. The mean frequency is ' + mean + ' and the standard deviation is ' + std + '.')
+            sns.histplot(data = df, x = 'actors_weighted_frequency', ax = self.ax1, bins = 20)
+            self.ax1.set_title('Actor Frequency Histogram')
+            self.ax1.set_xlabel('Actor Company Frequency')
+            self.ax1.set_ylabel('Frequency (Count)')
+            sns.despine()
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+        
 
 # Target Variable Window            
 class TargetVar(QMainWindow):
@@ -308,19 +516,26 @@ class TargetVar(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        self.groupBox15 = QGroupBox('Navigation Bar')
+        self.groupBox15Layout= QHBoxLayout()
+        self.groupBox15.setLayout(self.groupBox15Layout)
+        
         self.groupBox2 = QGroupBox('Graphic')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
-        self.label = QLabel("The average vote for an IMDb movie is calculated by the averaging all the ratings for a movie. However, IMDb uses weighted average vote over raw average. \nThis allows IMDb to weight votes differently in order to detect unusual activity, like review-bombing. This allows IMDb to prevent users from drastically changing a movie's score.")
-        self.layout.addWidget(self.label)
+        mean = str(round(df['weighted_average_vote'].mean()))
+        std = str(round(df['weighted_average_vote'].std()))
+        
+        self.label = QLabel("The average vote for an IMDb movie is calculated by the averaging all the ratings for a movie. However, IMDb uses weighted average vote over raw average. \nThis allows IMDb to weight votes differently in order to detect unusual activity, like review-bombing. This allows IMDb to prevent users from drastically changing a movie's score. \nThe mean weighted average vote is " + mean + ' and the standard deviation is ' +std + '. This will be our target variable to predict.')
         self.groupBox1Layout.addWidget(self.label)
-        
-        
         
         self.fig = Figure()
         self.ax1 = self.fig.add_subplot(111)
         self.canvas = FigureCanvas(self.fig)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        
+        self.groupBox15Layout.addWidget(self.toolbar)
 
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -328,16 +543,18 @@ class TargetVar(QMainWindow):
         
         self.groupBox2Layout.addWidget(self.canvas)
         
-        self.ax1.clear()
-        self.ax1.scatter([1,2,3,4,5,6,7,8,9,10], [15,25,30,20,50,55,60,55,70,75])
+        sns.histplot(data = df, x = 'weighted_average_vote', ax = self.ax1, bins = 40, kde = True)
+        self.ax1.set_title('Distribution of Weighted Votes')
+        sns.despine()
         self.fig.tight_layout()
         self.fig.canvas.draw_idle()
         
         self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox15)
         self.layout.addWidget(self.groupBox2)
     
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(500, 500)                      # Resize the window
+        self.resize(1000, 1000)                      # Resize the window
 
 
 class SGD(QMainWindow):
@@ -445,7 +662,7 @@ class predi(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel("This tool will allow you to make predictions against our best model, to see who can come out on top!\nWe will give you a list of features of a movie selected randomly from our test set and you will predict the weighted average score.\nOur model will also predict the weighted average score, and whoever comes the closest to the real score will win!")
+        self.label = QLabel("This tool will allow you to make predictions against our best model, to see who can come out on top!\nWe will give you a list of features of a movie selected randomly from our test set and you will predict the weighted average score.\nOur model will also predict the weighted average score, and whoever comes the closest to the real score will win! \nSince you are presumably a human, we will give you human readable features for you to make your guess. \nRemember, no cheating by looking up the movie online. And if any of the features are missing, it is because they were not in the IMDb dataset, so our model did not get them either.")
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox15 = QGroupBox('Random Movie Generator')
@@ -457,19 +674,35 @@ class predi(QMainWindow):
         self.groupBox15Layout.addWidget(self.button)
         self.button.clicked.connect(self.on_click)
         
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setRowCount(2)
+        self.tableWidget.setColumnCount(15)
+        self.tableWidget.setItem(0, 0, QTableWidgetItem("Duration"))
+        self.tableWidget.setItem(0, 1, QTableWidgetItem("Title"))
+        self.tableWidget.setItem(0, 2, QTableWidgetItem("Date Published"))
+        self.tableWidget.setItem(0, 3, QTableWidgetItem("Director"))
+        self.tableWidget.setItem(0, 4, QTableWidgetItem("Writer"))
+        self.tableWidget.setItem(0, 5, QTableWidgetItem("Production Company"))
+        self.tableWidget.setItem(0, 6, QTableWidgetItem("Actors"))
+        self.tableWidget.setItem(0, 7, QTableWidgetItem("Description"))
+        self.tableWidget.setItem(0, 8, QTableWidgetItem("Budget"))
+        self.tableWidget.setItem(0, 9, QTableWidgetItem("USA Gross Income"))
+        self.tableWidget.setItem(0, 10, QTableWidgetItem("Worldwide Gross Income"))
+        self.tableWidget.setItem(0, 11, QTableWidgetItem("Genre 1"))
+        self.tableWidget.setItem(0, 12, QTableWidgetItem("Genre 2"))
+        self.tableWidget.setItem(0, 13, QTableWidgetItem("Genre 3"))
+        self.tableWidget.setItem(0, 14, QTableWidgetItem("Region"))
         
         self.groupBox175 = QGroupBox("Your Movie's 'Features")
         self.groupBox175Layout= QHBoxLayout()
         self.groupBox175.setLayout(self.groupBox175Layout)
-        self.label = QLabel("here is where movie features will go")
-        self.groupBox175Layout.addWidget(self.label)
+        self.groupBox175Layout.addWidget(self.tableWidget)
         
         self.groupBox2 = QGroupBox('Input your guess')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
 
         self.txtInputText = QLineEdit(self)
-        
 
         self.locked = QPushButton("Lock In!",self)
         self.locked.clicked.connect(self.guess)
@@ -481,12 +714,8 @@ class predi(QMainWindow):
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
-        
-
-        
         self.label3 = QLabel('')
         self.groupBox3Layout.addWidget(self.label3)
-
 
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox15)
@@ -498,12 +727,39 @@ class predi(QMainWindow):
         self.resize(1000, 1000)                         # Resize the window
 
     def on_click(self):
-        print('PyQt5 button click')
+        global movie
+        movie = pred.sample(n = 1)
+        movie2 = movie[['duration', 'title',
+                        'date_published', 'director', 'writer', 'production_company',
+                        'actors', 'description', 'budget_adjusted',
+                        'usa_gross_income_adjusted', 'worldwide_gross_income_adjusted',
+                        'genre1', 'genre2', 'genre3', 'region']]
+        movie3 = movie2.to_numpy()
+        movie4 = movie3[0]
+        self.tableWidget.setItem(1,0, QTableWidgetItem(str(movie4[0])))
+        self.tableWidget.setItem(1,1, QTableWidgetItem(str(movie4[1])))
+        self.tableWidget.setItem(1,2, QTableWidgetItem(str(movie4[2])))
+        self.tableWidget.setItem(1,3, QTableWidgetItem(str(movie4[3])))
+        self.tableWidget.setItem(1,4, QTableWidgetItem(str(movie4[4])))
+        self.tableWidget.setItem(1,5, QTableWidgetItem(str(movie4[5])))
+        self.tableWidget.setItem(1,6, QTableWidgetItem(str(movie4[6])))
+        self.tableWidget.setItem(1,7, QTableWidgetItem(str(movie4[7])))
+        self.tableWidget.setItem(1,8, QTableWidgetItem(str(movie4[8])))
+        self.tableWidget.setItem(1,9, QTableWidgetItem(str(movie4[9])))
+        self.tableWidget.setItem(1,10, QTableWidgetItem(str(movie4[10])))
+        self.tableWidget.setItem(1,11, QTableWidgetItem(str(movie4[11])))
+        self.tableWidget.setItem(1,12, QTableWidgetItem(str(movie4[12])))
+        self.tableWidget.setItem(1,13, QTableWidgetItem(str(movie4[13])))
+        self.tableWidget.setItem(1,14, QTableWidgetItem(str(movie4[14])))
+
 
     def guess(self):
+        movie22 = movie[['Actual Rating', 'Predicted Rating']]
+        movie23 = movie22.to_numpy()
+        movie24 = movie23[0]
         a = self.txtInputText.text()
-        b = 5
-        c = 10
+        b = movie24[1]
+        c = movie24[0]
         if abs(c - float(a)) < abs(c - b):    
             self.label3.setText("The results are in...\nYou Predicted: " + a + "\nOur model predicted: " + str(b) + "\nThe actual weighted average vote is: " + str(c) + "\nYou win!")
         if abs(c - float(a)) > abs(c - b):   
@@ -568,11 +824,23 @@ class Menu(QMainWindow):
         
         # exit tabs
         
+        file2Button = QAction("Link to our report", self)   
+        file2Button.setStatusTip("Here you can find the full report of our results")   
+        file2Button.triggered.connect(self.file2)    
+        
+        file3Button = QAction("About Us", self)   
+        file3Button.setStatusTip("Information about our project")   
+        file3Button.triggered.connect(self.file3)    
+        
+        
         exitButton = QAction(QIcon('enter.png'), '&Exit', self)
         exitButton.setShortcut('Ctrl+Q')
         exitButton.setStatusTip('Exit application')
         exitButton.triggered.connect(self.close)
-
+        
+        
+        fileMenu.addAction(file2Button)
+        fileMenu.addAction(file3Button)
         fileMenu.addAction(exitButton)
         
         # preprocessing tabs
@@ -633,7 +901,12 @@ class Menu(QMainWindow):
 
         self.show()
     
+    def file2(self):
+        webbrowser.open('http://www.google.com') # this will be our report
         
+    def file3(self):
+        QMessageBox.about(self, "About Us", "We created this project in Fall 2021 as part of our Intro to Data Mining Course at George Washington University.")
+    
     def preproc1(self):
         dialog = NumericalVars()
         self.dialogs.append(dialog) 
@@ -684,7 +957,9 @@ class Menu(QMainWindow):
 #:: Application starts here
 #::------------------------
 
-
-app = QApplication(sys.argv)  # creates the PyQt5 application
-mn = Menu()  # Creates the menu
-sys.exit(app.exec_())  # Close the application
+if __name__ == "__main__":
+    df = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\moviesdf.csv')
+    pred = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\predictions_with_ids.csv')
+    app = QApplication(sys.argv)  # creates the PyQt5 application
+    mn = Menu()  # Creates the menu
+    sys.exit(app.exec_())
