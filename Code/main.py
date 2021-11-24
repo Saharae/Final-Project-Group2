@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     # temp try except block just to prevent hitting limits form data downloader
     try:
-        ratings, movies, names, title_principals, inflation = down.downloader()
+        ratings, movies, names, title_principals, inflation, pred = down.downloader()
     except:
         ratings, movies, names, title_principals, inflation = pre.load_all(pre.get_repo_root())
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # GUI
     print('Creating the GUI')
-    gui.plot(df)
+    gui.take(df, pred)
     app = QApplication(sys.argv)  # creates the PyQt5 application
     mn = gui.Menu()  # Creates the menu
     sys.exit(app.exec_())  # Close the application

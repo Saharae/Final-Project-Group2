@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import QLineEdit    # Lineedit
 from PyQt5.QtWidgets import QRadioButton # Radio Buttons
 from PyQt5.QtWidgets import QGroupBox    # Group Box
 
+from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem
+
 from numpy.polynomial.polynomial import polyfit
 import numpy as np
 
@@ -46,10 +48,13 @@ import zipfile
 
 
 df = 0
+pred = 0
 
-def plot(x):
+def take(x, y):
     global df
+    global pred
     df = x
+    pred = y
 
 ### The way this works:
 ### Each class is a separate window. Within each class you can define how you want
@@ -657,7 +662,7 @@ class predi(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel("This tool will allow you to make predictions against our best model, to see who can come out on top!\nWe will give you a list of features of a movie selected randomly from our test set and you will predict the weighted average score.\nOur model will also predict the weighted average score, and whoever comes the closest to the real score will win! \nSince you are presumably a human, we will give you human readable features for you to make your guess. \nRemember, no cheating by looking up the movie online.")
+        self.label = QLabel("This tool will allow you to make predictions against our best model, to see who can come out on top!\nWe will give you a list of features of a movie selected randomly from our test set and you will predict the weighted average score.\nOur model will also predict the weighted average score, and whoever comes the closest to the real score will win! \nSince you are presumably a human, we will give you human readable features for you to make your guess. \nRemember, no cheating by looking up the movie online. And if any of the features are missing, it is because they were not in the IMDb dataset, so our model did not get them either.")
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox15 = QGroupBox('Random Movie Generator')
@@ -669,19 +674,35 @@ class predi(QMainWindow):
         self.groupBox15Layout.addWidget(self.button)
         self.button.clicked.connect(self.on_click)
         
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setRowCount(2)
+        self.tableWidget.setColumnCount(15)
+        self.tableWidget.setItem(0, 0, QTableWidgetItem("Duration"))
+        self.tableWidget.setItem(0, 1, QTableWidgetItem("Title"))
+        self.tableWidget.setItem(0, 2, QTableWidgetItem("Date Published"))
+        self.tableWidget.setItem(0, 3, QTableWidgetItem("Director"))
+        self.tableWidget.setItem(0, 4, QTableWidgetItem("Writer"))
+        self.tableWidget.setItem(0, 5, QTableWidgetItem("Production Company"))
+        self.tableWidget.setItem(0, 6, QTableWidgetItem("Actors"))
+        self.tableWidget.setItem(0, 7, QTableWidgetItem("Description"))
+        self.tableWidget.setItem(0, 8, QTableWidgetItem("Budget"))
+        self.tableWidget.setItem(0, 9, QTableWidgetItem("USA Gross Income"))
+        self.tableWidget.setItem(0, 10, QTableWidgetItem("Worldwide Gross Income"))
+        self.tableWidget.setItem(0, 11, QTableWidgetItem("Genre 1"))
+        self.tableWidget.setItem(0, 12, QTableWidgetItem("Genre 2"))
+        self.tableWidget.setItem(0, 13, QTableWidgetItem("Genre 3"))
+        self.tableWidget.setItem(0, 14, QTableWidgetItem("Region"))
         
         self.groupBox175 = QGroupBox("Your Movie's 'Features")
         self.groupBox175Layout= QHBoxLayout()
         self.groupBox175.setLayout(self.groupBox175Layout)
-        self.label = QLabel("here is where movie features will go")
-        self.groupBox175Layout.addWidget(self.label)
+        self.groupBox175Layout.addWidget(self.tableWidget)
         
         self.groupBox2 = QGroupBox('Input your guess')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
 
         self.txtInputText = QLineEdit(self)
-        
 
         self.locked = QPushButton("Lock In!",self)
         self.locked.clicked.connect(self.guess)
@@ -693,12 +714,8 @@ class predi(QMainWindow):
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
-        
-
-        
         self.label3 = QLabel('')
         self.groupBox3Layout.addWidget(self.label3)
-
 
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox15)
@@ -710,12 +727,39 @@ class predi(QMainWindow):
         self.resize(1000, 1000)                         # Resize the window
 
     def on_click(self):
-        print('PyQt5 button click')
+        global movie
+        movie = pred.sample(n = 1)
+        movie2 = movie[['duration', 'title',
+                        'date_published', 'director', 'writer', 'production_company',
+                        'actors', 'description', 'budget_adjusted',
+                        'usa_gross_income_adjusted', 'worldwide_gross_income_adjusted',
+                        'genre1', 'genre2', 'genre3', 'region']]
+        movie3 = movie2.to_numpy()
+        movie4 = movie3[0]
+        self.tableWidget.setItem(1,0, QTableWidgetItem(str(movie4[0])))
+        self.tableWidget.setItem(1,1, QTableWidgetItem(str(movie4[1])))
+        self.tableWidget.setItem(1,2, QTableWidgetItem(str(movie4[2])))
+        self.tableWidget.setItem(1,3, QTableWidgetItem(str(movie4[3])))
+        self.tableWidget.setItem(1,4, QTableWidgetItem(str(movie4[4])))
+        self.tableWidget.setItem(1,5, QTableWidgetItem(str(movie4[5])))
+        self.tableWidget.setItem(1,6, QTableWidgetItem(str(movie4[6])))
+        self.tableWidget.setItem(1,7, QTableWidgetItem(str(movie4[7])))
+        self.tableWidget.setItem(1,8, QTableWidgetItem(str(movie4[8])))
+        self.tableWidget.setItem(1,9, QTableWidgetItem(str(movie4[9])))
+        self.tableWidget.setItem(1,10, QTableWidgetItem(str(movie4[10])))
+        self.tableWidget.setItem(1,11, QTableWidgetItem(str(movie4[11])))
+        self.tableWidget.setItem(1,12, QTableWidgetItem(str(movie4[12])))
+        self.tableWidget.setItem(1,13, QTableWidgetItem(str(movie4[13])))
+        self.tableWidget.setItem(1,14, QTableWidgetItem(str(movie4[14])))
+
 
     def guess(self):
+        movie22 = movie[['Actual Rating', 'Predicted Rating']]
+        movie23 = movie22.to_numpy()
+        movie24 = movie23[0]
         a = self.txtInputText.text()
-        b = 5
-        c = 10
+        b = movie24[1]
+        c = movie24[0]
         if abs(c - float(a)) < abs(c - b):    
             self.label3.setText("The results are in...\nYou Predicted: " + a + "\nOur model predicted: " + str(b) + "\nThe actual weighted average vote is: " + str(c) + "\nYou win!")
         if abs(c - float(a)) > abs(c - b):   
@@ -915,6 +959,7 @@ class Menu(QMainWindow):
 
 if __name__ == "__main__":
     df = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\moviesdf.csv')
+    pred = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\predictions_with_ids.csv')
     app = QApplication(sys.argv)  # creates the PyQt5 application
     mn = Menu()  # Creates the menu
     sys.exit(app.exec_())
