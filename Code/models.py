@@ -4,6 +4,7 @@ import numpy as np
 
 from models_helper import Dataset, Model, ModelTuner, Plotter
 from preprocessing_utils import get_repo_root
+from preprocessing_utils import get_repo_root_w
 
 from scipy.stats import shapiro, ttest_ind, bartlett, mannwhitneyu
 
@@ -11,6 +12,7 @@ from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,AdaBoostRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error
+from sys import platform
 
 def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched, random_seed = 33, run_base_estimators = False, run_model_tuning = False, fast_gridsearch = True, save_model = False):
     '''
@@ -85,7 +87,10 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
         rmse_dict[knn_regressor.name] = rmse
 
         # Plots to compare models
-        base_models_plotter = Plotter(get_repo_root() + '/results/model_plots/', name='Base Untuned Models, All Features', savename='base_all_features')
+        if platform == "darwin":
+            base_models_plotter = Plotter(get_repo_root() + '/results/model_plots/', name='Base Untuned Models, All Features', savename='base_all_features')
+        elif platform == "win32":
+            base_models_plotter = Plotter(get_repo_root_w() + '\\results\\model_plots\\', name='Base Untuned Models, All Features', savename='base_all_features')
         base_models_plotter.model_comparison(mse_dict, show=False, score = 'Val. MSE', saveplot=True)
         base_models_plotter.model_comparison(rmse_dict, show=False, score = 'Val. RMSE', alt=1, saveplot=True)
 
@@ -156,14 +161,25 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
 
     # Skip tuning to run faster once we already have found best model
     if run_model_tuning:
-        gridsearchcv = ModelTuner(get_repo_root() + '/results/', random_seed, X_train_val, Y_train_val, test_x=test_X, test_y=test_Y, name='gridsearchcv', target_scaler=ss_target, ps=ps, models_pipe=models, params=param_grids)
+        
+        if platform == "darwin":
+            gridsearchcv = ModelTuner(get_repo_root() + '/results/', random_seed, X_train_val, Y_train_val, test_x=test_X, test_y=test_Y, name='gridsearchcv', target_scaler=ss_target, ps=ps, models_pipe=models, params=param_grids)
+            
+        elif platform == "win32":
+            gridsearchcv = ModelTuner(get_repo_root_w() + '\\results\\', random_seed, X_train_val, Y_train_val, test_x=test_X, test_y=test_Y, name='gridsearchcv', target_scaler=ss_target, ps=ps, models_pipe=models, params=param_grids)
         
         best_model_df, validation_curve_blob, learning_curve_blob = gridsearchcv.do_gridsearchcv(validation_curves=False, learning_curves=False)
 
         mse_dict = {x:y for x,y in zip(best_model_df['model'].to_list(), best_model_df['best_score'].to_list())}
 
         # Generate validation, learning, and model comparison plots
-        cv_plotter = Plotter(get_repo_root() + '/results/model_plots/', name='Tuning Model', savename='tuning_model')
+        
+        if platform == "darwin":
+            cv_plotter = Plotter(get_repo_root() + '/results/model_plots/', name='Tuning Model', savename='tuning_model')            
+            
+        elif platform == "win32":
+            cv_plotter = Plotter(get_repo_root_w() + '\\results\\model_plots\\', name='Tuning Model', savename='tuning_model')
+        
         cv_plotter.validation_curves(validation_curve_blob, show=False, saveplot=True)
         cv_plotter.learning_curves(learning_curve_blob, show=False, saveplot=True)
         cv_plotter.model_comparison(mse_dict, show=False, score = 'Val. MSE', alt=1, saveplot=True)
@@ -181,14 +197,26 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
         
         # Save model
         if save_model:
-            best_model.save_model(get_repo_root() + '/results/best_params.pkl', best_params)
-            best_model.save_model(get_repo_root() + '/results/best_estimator.pkl', str(best_estimator))
+            if platform == "darwin":
+                best_model.save_model(get_repo_root() + '/results/best_params.pkl', best_params)
+                best_model.save_model(get_repo_root() + '/results/best_estimator.pkl', str(best_estimator))  
+            
+            elif platform == "win32":
+                best_model.save_model(get_repo_root_w() + '\\results\\best_params.pkl', best_params)
+                best_model.save_model(get_repo_root_w() + '\\results\\best_estimator.pkl', str(best_estimator))
 
     else:
         # Load model
         loaded_model = Model(random_seed, name='loaded_model')
-        best_params = loaded_model.load_model(get_repo_root() + '/results/best_params.pkl')
-        best_estimator = loaded_model.load_model(get_repo_root() + '/results/best_estimator.pkl')
+         
+        if platform == "darwin":
+            best_params = loaded_model.load_model(get_repo_root() + '/results/best_params.pkl')
+            best_estimator = loaded_model.load_model(get_repo_root() + '/results/best_estimator.pkl')
+        
+        elif platform == "win32":
+            best_params = loaded_model.load_model(get_repo_root_w() + '\\results\\best_params.pkl')
+            best_estimator = loaded_model.load_model(get_repo_root_w() + '\\results\\best_estimator.pkl')
+        
         best_estimator = eval(best_estimator)
 
         # Best model already found, don't just load best_model.pkl (already trained model), because the fully trained model is huge so can't upload easily to GitHub.
@@ -217,7 +245,12 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
         # Better than randomly guessing?
     ####################################################
     # Generate feature importance plot
-    results_eval = Plotter(get_repo_root() + '/results/model_plots/', name='Results Evaluation', savename='results_eval')
+    if platform == "darwin":
+        results_eval = Plotter(get_repo_root() + '/results/model_plots/', name='Results Evaluation', savename='results_eval')
+        
+    elif platform == "win32":   
+        results_eval = Plotter(get_repo_root_w() + '\\results\\model_plots\\', name='Results Evaluation', savename='results_eval')
+        
     results_eval.most_important_features(train_df=df_train.iloc[:,:-1], model=model_to_use.model, show=False, saveplot=True)
 
     # Better than random test
@@ -265,8 +298,12 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
 
     # Scores and other model evaluation results
     evaluation_results_df = pd.DataFrame(evaluation_results.items(), columns=['Score Type', 'Score'])
-    evaluation_results_df.to_csv(get_repo_root() + '/results/best_model_evaluation_results.csv', index=False)
+    if platform == "darwin":
+        evaluation_results_df.to_csv(get_repo_root() + '/results/best_model_evaluation_results.csv', index=False)
 
+    elif platform == "win32":
+        evaluation_results_df.to_csv(get_repo_root_w() + '\\results\\best_model_evaluation_results.csv', index=False)
+        
     plot_eval_results = {'Model':['Our Model', 'Random Model'], 'MSE':[mse_ctxt, mse_ctxt_random]}
     results_eval.vs_random_bar(plot_eval_results, show=False, saveplot=True)
 
@@ -274,7 +311,10 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
     
     # Actual, Predicted, Random
     prediction_results = pd.DataFrame(np.hstack((test_Y.reshape(-1,1), test_Y_predicted.reshape(-1,1), test_Y_random.reshape(-1,1))), columns=['Actual Rating', 'Predicted Rating', 'Random Rating'])
-    prediction_results.to_csv(get_repo_root() + '/results/prediction_results.csv', index=False)
+    if platform == "darwin":
+        prediction_results.to_csv(get_repo_root() + '/results/prediction_results.csv', index=False)
+    elif platform == "win32":
+        prediction_results.to_csv(get_repo_root_w() + '\\results\\prediction_results.csv', index=False)
     
     # Un-processed features, Actual, Predicted, Random
     predictions_with_ids = pd.DataFrame(np.hstack((df_test_ids.values, prediction_results.values)), columns=['imdb_title_id','weighted_average_vote','Inverse Transformed Weighted Avg Vote','Actual Rating','Predicted Rating','Random Rating'])
@@ -283,8 +323,12 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
     predictions_with_ids['imdb_title_id'] = predictions_with_ids['imdb_title_id'].astype(str)
 
     predictions_with_ids = predictions_with_ids.merge(df_test_untouched, on='imdb_title_id', how='inner')
-    predictions_with_ids.to_csv(get_repo_root() + '/results/predictions_with_ids.csv', index=False)
-
+    
+    if platform == "darwin":
+        predictions_with_ids.to_csv(get_repo_root() + '/results/predictions_with_ids.csv', index=False)
+    elif platform == "win32":
+        predictions_with_ids.to_csv(get_repo_root_w() + '\\results\\predictions_with_ids.csv', index=False)
+        
     return
 
 if __name__ == "__main__":
