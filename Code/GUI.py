@@ -597,7 +597,7 @@ class Hyp1(QMainWindow):
         #::--------------------------------------------------------
         super(Hyp1, self).__init__()
         
-        self.Title = 'Hyperparameter Tuning & Validation Phase I'
+        self.Title = 'Hyperparameter Tuning and Validation Phase I'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
@@ -645,7 +645,7 @@ class Hyp2(QMainWindow):
         #::--------------------------------------------------------
         super(Hyp2, self).__init__()
         
-        self.Title = 'Hyperparameter Tuning & Validation Phase II'
+        self.Title = 'Hyperparameter Tuning and Validation Phase II'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
@@ -715,7 +715,7 @@ class ModelResults(QMainWindow):
         #::--------------------------------------------------------
         super(ModelResults, self).__init__()
         
-        self.Title = 'Model & Results Evaluation'
+        self.Title = 'Model and Results Evaluation'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
@@ -981,20 +981,20 @@ class Menu(QMainWindow):
         model1button.setStatusTip("Models to Try")   
         model1button.triggered.connect(self.model1)  
         
-        model2button = QAction('Hyperparameter Tuning & Validation Phase I',  self)
-        model2button.setStatusTip("Hyperparameter Tuning & Validation Phase I")   
+        model2button = QAction('Hyperparameter Tuning and Validation Phase I',  self)
+        model2button.setStatusTip("Hyperparameter Tuning and Validation Phase I")   
         model2button.triggered.connect(self.model2)  
         
-        model3button = QAction('Hyperparameter Tuning & Validation Phase II',  self)
-        model3button.setStatusTip("Hyperparameter Tuning & Validation Phase II")   
+        model3button = QAction('Hyperparameter Tuning and Validation Phase II',  self)
+        model3button.setStatusTip("Hyperparameter Tuning and Validation Phase II")   
         model3button.triggered.connect(self.model3)  
         
         model4button = QAction('Model Selection',  self)
         model4button.setStatusTip("Model Selection")   
         model4button.triggered.connect(self.model4)  
         
-        model5button = QAction('Model & Results Evaluation',  self)
-        model5button.setStatusTip("Model & Results Evaluation")   
+        model5button = QAction('Model and Results Evaluation',  self)
+        model5button.setStatusTip("Model and Results Evaluation")   
         model5button.triggered.connect(self.model5)  
 
         model.addAction(model1button)
