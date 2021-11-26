@@ -557,87 +557,201 @@ class TargetVar(QMainWindow):
         self.resize(1000, 1000)                      # Resize the window
 
 
-class SGD(QMainWindow):
+class ModelstoTry(QMainWindow):
 
     def __init__(self):
         #::--------------------------------------------------------
         # Initialize the values of the class
         # Here the class inherits all the attributes and methods from the QMainWindow
         #::--------------------------------------------------------
-        super(SGD, self).__init__()
+        super(ModelstoTry, self).__init__()
         
-        self.Title = 'SGD Regressor'
+        self.Title = 'Models to Try'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
-        self.layout = QVBoxLayout(self.main_widget)  
+        self.layout = QVBoxLayout(self.main_widget) 
+        
+        self.groupBox1 = QGroupBox('Background')
+        self.groupBox1Layout= QHBoxLayout()
+        self.groupBox1.setLayout(self.groupBox1Layout)
+        
+        self.label = QLabel('We have selected a handful of promising regression models to try with our data.')
+        self.groupBox1Layout.addWidget(self.label)
+        
+        self.groupBox2 = QGroupBox('MSE Plot')
+        self.groupBox2Layout= QHBoxLayout()
+        self.groupBox2.setLayout(self.groupBox2Layout)
+        
+        self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox2)
+        
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(500, 500)  
         
-class RF(QMainWindow):
+class Hyp1(QMainWindow):
 
     def __init__(self):
         #::--------------------------------------------------------
         # Initialize the values of the class
         # Here the class inherits all the attributes and methods from the QMainWindow
         #::--------------------------------------------------------
-        super(RF, self).__init__()
+        super(Hyp1, self).__init__()
         
-        self.Title = 'Random Forest Regressor'
+        self.Title = 'Hyperparameter Tuning & Validation Phase I'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
+        
+        self.groupBox1 = QGroupBox('Info')
+        self.groupBox1Layout= QHBoxLayout()
+        self.groupBox1.setLayout(self.groupBox1Layout)
+        
+        self.label = QLabel('We selected the top 3 base models and tuned them to see if performance increases.')
+        self.groupBox1Layout.addWidget(self.label)
+        
+        self.groupBox15 = QGroupBox('Plot Picker')
+        self.groupBox15Layout= QHBoxLayout()
+        self.groupBox15.setLayout(self.groupBox15Layout)
+        
+        self.groupBox2 = QGroupBox('Tuned Plots (radio buttons)')
+        self.groupBox2Layout= QHBoxLayout()
+        self.groupBox2.setLayout(self.groupBox2Layout)
+        
+        self.groupBox3 = QGroupBox('Model Comparison')
+        self.groupBox3Layout= QHBoxLayout()
+        self.groupBox3.setLayout(self.groupBox3Layout)
+        
+        self.groupBox4 = QGroupBox('Gridsearch Results')
+        self.groupBox4Layout= QHBoxLayout()
+        self.groupBox4.setLayout(self.groupBox4Layout)
+
+
+        self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox15)
+        self.layout.addWidget(self.groupBox2)
+        self.layout.addWidget(self.groupBox3)
+        self.layout.addWidget(self.groupBox4)
+        
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(500, 500)  
 
 
-class Gradient(QMainWindow):
+class Hyp2(QMainWindow):
 
     def __init__(self):
         #::--------------------------------------------------------
         # Initialize the values of the class
         # Here the class inherits all the attributes and methods from the QMainWindow
         #::--------------------------------------------------------
-        super(Gradient, self).__init__()
+        super(Hyp2, self).__init__()
         
-        self.Title = 'Gradient Boosting Regressor'
+        self.Title = 'Hyperparameter Tuning & Validation Phase II'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
+        
+        self.groupBox1 = QGroupBox('Info')
+        self.groupBox1Layout= QHBoxLayout()
+        self.groupBox1.setLayout(self.groupBox1Layout)
+        
+        self.label = QLabel('We tried to tune our best model, the Random Forest model to see how much better we can make it.')
+        self.groupBox1Layout.addWidget(self.label)
+        
+        self.groupBox2 = QGroupBox('Learning Curves')
+        self.groupBox2Layout= QHBoxLayout()
+        self.groupBox2.setLayout(self.groupBox2Layout)
+        
+        self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox2)
+        
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(500, 500)  
 
 
-class Ada(QMainWindow):
+class ModelSelection(QMainWindow):
 
     def __init__(self):
         #::--------------------------------------------------------
         # Initialize the values of the class
         # Here the class inherits all the attributes and methods from the QMainWindow
         #::--------------------------------------------------------
-        super(Ada, self).__init__()
+        super(ModelSelection, self).__init__()
         
-        self.Title = 'AdaBoost Regressor'
+        self.Title = 'Model Selection'
         self.setWindowTitle(self.Title)
-        
         self.main_widget = QWidget(self)
-        self.layout = QVBoxLayout(self.main_widget)  
+        self.layout = QVBoxLayout(self.main_widget) 
+        
+        self.groupBox1 = QGroupBox('Info')
+        self.groupBox1Layout= QHBoxLayout()
+        self.groupBox1.setLayout(self.groupBox1Layout)
+        
+        self.label = QLabel('This is our selected model.')
+        self.groupBox1Layout.addWidget(self.label)
+        
+        self.groupBox2 = QGroupBox('Gridsearch Results 2')
+        self.groupBox2Layout= QHBoxLayout()
+        self.groupBox2.setLayout(self.groupBox2Layout)
+        
+        self.groupBox3 = QGroupBox('Most Important Features')
+        self.groupBox3Layout= QHBoxLayout()
+        self.groupBox3.setLayout(self.groupBox3Layout)
+        
+        
+        self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox2)
+        self.layout.addWidget(self.groupBox3)
+        
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(500, 500)  
 
 
-class lin(QMainWindow):
+class ModelResults(QMainWindow):
 
     def __init__(self):
         #::--------------------------------------------------------
         # Initialize the values of the class
         # Here the class inherits all the attributes and methods from the QMainWindow
         #::--------------------------------------------------------
-        super(lin, self).__init__()
+        super(ModelResults, self).__init__()
         
-        self.Title = 'Linear Regression'
+        self.Title = 'Model & Results Evaluation'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
+        
+        self.groupBox1 = QGroupBox('Info')
+        self.groupBox1Layout= QHBoxLayout()
+        self.groupBox1.setLayout(self.groupBox1Layout)
+        
+        self.label = QLabel('Our model is much better than a random model.')
+        self.groupBox1Layout.addWidget(self.label)
+        
+        self.groupBox2 = QGroupBox('Our Model')
+        self.groupBox2Layout= QHBoxLayout()
+        self.groupBox2.setLayout(self.groupBox2Layout)
+        
+        self.groupBox3 = QGroupBox('Model idk')
+        self.groupBox3Layout= QHBoxLayout()
+        self.groupBox3.setLayout(self.groupBox3Layout)
+        
+        self.label = QLabel('Our model can predict the weighted average movie IMDB rating with an average error of +- 0.93 while a random model has an average error of +- 2.9.')
+        self.groupBox3Layout.addWidget(self.label)
+        
+        self.groupBox4 = QGroupBox('Prediction Results')
+        self.groupBox4Layout= QHBoxLayout()
+        self.groupBox4.setLayout(self.groupBox4Layout)
+        
+        self.groupBox5 = QGroupBox('Our Model Versus Random')
+        self.groupBox5Layout= QHBoxLayout()
+        self.groupBox5.setLayout(self.groupBox5Layout)
+        
+        self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox2)
+        self.layout.addWidget(self.groupBox3)
+        self.layout.addWidget(self.groupBox4)
+        self.layout.addWidget(self.groupBox5)
+        
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(500, 500)  
 
@@ -863,24 +977,24 @@ class Menu(QMainWindow):
         
         # modelling
         
-        model1button = QAction('SGD Regressor',  self)
-        model1button.setStatusTip("SGD Regressor Model")   
+        model1button = QAction('Models to Try',  self)
+        model1button.setStatusTip("Models to Try")   
         model1button.triggered.connect(self.model1)  
         
-        model2button = QAction('Random Forest Regressor',  self)
-        model2button.setStatusTip("Random Forest Regressor Model")   
+        model2button = QAction('Hyperparameter Tuning & Validation Phase I',  self)
+        model2button.setStatusTip("Hyperparameter Tuning & Validation Phase I")   
         model2button.triggered.connect(self.model2)  
         
-        model3button = QAction('Gradient Boosting Regressor',  self)
-        model3button.setStatusTip("Gradient Boosting Regressor Model")   
+        model3button = QAction('Hyperparameter Tuning & Validation Phase II',  self)
+        model3button.setStatusTip("Hyperparameter Tuning & Validation Phase II")   
         model3button.triggered.connect(self.model3)  
         
-        model4button = QAction('AdaBoost Regressor',  self)
-        model4button.setStatusTip("AdaBoost Regressor Model")   
+        model4button = QAction('Model Selection',  self)
+        model4button.setStatusTip("Model Selection")   
         model4button.triggered.connect(self.model4)  
         
-        model5button = QAction('Linear Regression',  self)
-        model5button.setStatusTip("Linear Regression Regressor")   
+        model5button = QAction('Model & Results Evaluation',  self)
+        model5button.setStatusTip("Model & Results Evaluation")   
         model5button.triggered.connect(self.model5)  
 
         model.addAction(model1button)
@@ -923,27 +1037,27 @@ class Menu(QMainWindow):
         dialog.show()
         
     def model1(self):
-        dialog = SGD()
+        dialog = ModelstoTry()
         self.dialogs.append(dialog) 
         dialog.show()
     
     def model2(self):
-        dialog = RF()
+        dialog = Hyp1()
         self.dialogs.append(dialog) 
         dialog.show()
     
     def model3(self):
-        dialog = Gradient()
+        dialog = Hyp2()
         self.dialogs.append(dialog) 
         dialog.show()
     
     def model4(self):
-        dialog = Ada()
+        dialog = ModelSelection()
         self.dialogs.append(dialog) 
         dialog.show()
         
     def model5(self):
-        dialog = lin()
+        dialog = ModelResults()
         self.dialogs.append(dialog) 
         dialog.show()
         
