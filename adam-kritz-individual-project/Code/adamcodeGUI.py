@@ -542,12 +542,10 @@ class TargetVar(QMainWindow):
         self.label = QLabel("The average vote for an IMDb movie is calculated by the averaging all the ratings for a movie. However, IMDb uses weighted average vote over raw average. \nThis allows IMDb to weight votes differently in order to detect unusual activity, like review-bombing. This allows IMDb to prevent users from drastically changing a movie's score. \nThe mean weighted average vote is " + mean + ' and the standard deviation is ' +std + '. This will be our target variable to predict.')
         self.groupBox1Layout.addWidget(self.label)
         
-        self.fig = Figure()
+        self.fig = Figure(figsize= (14, 14))
         self.ax1 = self.fig.add_subplot(111)
         self.canvas = FigureCanvas(self.fig)
-        self.toolbar = NavigationToolbar(self.canvas, self)
         
-        self.groupBox15Layout.addWidget(self.toolbar)
 
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -562,7 +560,7 @@ class TargetVar(QMainWindow):
         self.fig.canvas.draw_idle()
         
         
-        self.fig2 = Figure()
+        self.fig2 = Figure(figsize= (14, 14))
         self.ax2 = self.fig2.add_subplot(111)
         self.canvas2 = FigureCanvas(self.fig2)
         
@@ -588,10 +586,9 @@ class TargetVar(QMainWindow):
         self.fig2.canvas.draw_idle()
         
         self.layout.addWidget(self.groupBox1)
-        self.layout.addWidget(self.groupBox15)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
-    
+        
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(1000, 1000)                      # Resize the window
 
