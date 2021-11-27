@@ -46,7 +46,6 @@ if __name__ == "__main__":
     
     # EDA
     print('Doing EDA...')
-    # come back to this?
     #ax = eda.plot_duration(df)
 
     # Modeling
@@ -69,6 +68,7 @@ if __name__ == "__main__":
 
     # GUI
     print('Creating the GUI')
+    gui.unzip_results()
     gui.take(df, pred)
     app = QApplication(sys.argv)  # creates the PyQt5 application
     mn = gui.Menu()  # Creates the menu

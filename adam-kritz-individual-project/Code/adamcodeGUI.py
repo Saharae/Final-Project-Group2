@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem
 
 from numpy.polynomial.polynomial import polyfit
 import numpy as np
+from PyQt5.QtGui import QPixmap
 
 #----------------------------------------------------------------------
 from PyQt5.QtGui import QIcon
@@ -42,11 +43,18 @@ from matplotlib.figure import Figure
 import seaborn as sns
 from preprocessing_utils import get_repo_root
 from preprocessing_utils import get_repo_root_w
+from sys import platform
 import zipfile
 
 
-
-
+def unzip_results():
+    if platform == "darwin":
+        with zipfile.ZipFile(get_repo_root() + "/results.zip","r") as zf:
+            zf.extractall(get_repo_root())
+    elif platform == "win32":
+        with zipfile.ZipFile(get_repo_root_w() + "\\results.zip","r") as zf:
+            zf.extractall(get_repo_root_w())
+       
 df = 0
 pred = 0
 
@@ -524,6 +532,10 @@ class TargetVar(QMainWindow):
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        self.groupBox3 = QGroupBox('Graphic2')
+        self.groupBox3Layout= QHBoxLayout()
+        self.groupBox3.setLayout(self.groupBox3Layout)
+        
         mean = str(round(df['weighted_average_vote'].mean()))
         std = str(round(df['weighted_average_vote'].std()))
         
@@ -549,9 +561,36 @@ class TargetVar(QMainWindow):
         self.fig.tight_layout()
         self.fig.canvas.draw_idle()
         
+        
+        self.fig2 = Figure()
+        self.ax2 = self.fig2.add_subplot(111)
+        self.canvas2 = FigureCanvas(self.fig2)
+        
+        self.canvas2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        self.canvas2.updateGeometry()
+        
+        self.groupBox3Layout.addWidget(self.canvas2)
+        
+        sns.heatmap(df[['duration', 'weighted_average_vote', 'budget_adjusted',
+                    'usa_gross_income_adjusted', 'worldwide_gross_income_adjusted',
+                    'date_published_year', 'date_published_month', 'date_published_day',
+                    'actors_weighted_frequency', 'director_weighted_frequency',
+                    'writer_weighted_frequency', 'production_company_frequency', 'title_n_words',
+                    'title_ratio_long_words', 'title_ratio_vowels',
+                    'title_ratio_capital_letters', 'description_n_words',
+                    'description_ratio_long_words', 'description_ratio_vowels',
+                    'description_ratio_capital_letters', ]].corr(), vmin = -1, vmax = 1, ax = self.ax2, cmap = 'coolwarm')
+
+        self.ax2.set_title('Correlation Matrix of Numeric Variables')
+    
+        self.fig2.tight_layout()
+        self.fig2.canvas.draw_idle()
+        
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox15)
         self.layout.addWidget(self.groupBox2)
+        self.layout.addWidget(self.groupBox3)
     
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.resize(1000, 1000)                      # Resize the window
@@ -582,6 +621,17 @@ class ModelstoTry(QMainWindow):
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        self.label_image = QLabel()
+        if platform == "darwin":
+            self.pix = QPixmap(get_repo_root() + '/results/1. Base Model Comparison/model_comparison_base_all_features.png')
+            self.pix2 = self.pix.scaled(1000, 500)
+            self.label_image.setPixmap(self.pix2)
+        elif platform == "win32":
+            self.pix = QPixmap(get_repo_root_w() + '\\results\\1. Base Model Comparison\\model_comparison_base_all_features.png')
+            self.pix2 = self.pix.scaled(1000, 500)
+            self.label_image.setPixmap(self.pix2)
+        self.groupBox2Layout.addWidget(self.label_image)
+        
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         
@@ -600,7 +650,7 @@ class Hyp1(QMainWindow):
         self.Title = 'Hyperparameter Tuning and Validation Phase I'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
-        self.layout = QVBoxLayout(self.main_widget)  
+        self.layout = QGridLayout(self.main_widget) 
         
         self.groupBox1 = QGroupBox('Info')
         self.groupBox1Layout= QHBoxLayout()
@@ -613,29 +663,111 @@ class Hyp1(QMainWindow):
         self.groupBox15Layout= QHBoxLayout()
         self.groupBox15.setLayout(self.groupBox15Layout)
         
-        self.groupBox2 = QGroupBox('Tuned Plots (radio buttons)')
+        self.b1 = QRadioButton("Random Forest")
+        self.b1.toggled.connect(self.onClicked)
+
+        self.b2 = QRadioButton("KNN")
+        self.b2.toggled.connect(self.onClicked)
+
+        self.b3 = QRadioButton("Gradient Boosting")
+        self.b3.toggled.connect(self.onClicked)
+        
+        self.b4 = QRadioButton("Model Comparison")
+        self.b4.toggled.connect(self.onClicked)
+
+        self.groupBox15Layout.addWidget(self.b4)
+        self.groupBox15Layout.addWidget(self.b1)
+        self.groupBox15Layout.addWidget(self.b2)
+        self.groupBox15Layout.addWidget(self.b3)
+
+        
+        self.groupBox2 = QGroupBox('Tuned Plots')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
-        self.groupBox3 = QGroupBox('Model Comparison')
-        self.groupBox3Layout= QHBoxLayout()
-        self.groupBox3.setLayout(self.groupBox3Layout)
+        self.label_image = QLabel()
+        self.groupBox2Layout.addWidget(self.label_image)
+        
+        
+        self.label_image2 = QLabel()
+        
+        if platform == "darwin":
+            self.all_data = pd.read_csv(get_repo_root() + '/results/2. Tuning 1/gridsearchcv_results.csv')
+        elif platform == "win32":   
+            self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\2. Tuning 1\\gridsearchcv_results.csv')
+    
         
         self.groupBox4 = QGroupBox('Gridsearch Results')
         self.groupBox4Layout= QHBoxLayout()
         self.groupBox4.setLayout(self.groupBox4Layout)
+    
+        NumRows = len(self.all_data.index)
+        
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setColumnCount(len(self.all_data.columns))
+        self.tableWidget.setRowCount(NumRows)
+        self.tableWidget.setHorizontalHeaderLabels(self.all_data.columns)
 
+        for i in range(NumRows):
+            for j in range(len(self.all_data.columns)):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(self.all_data.iat[i, j])))
 
-        self.layout.addWidget(self.groupBox1)
-        self.layout.addWidget(self.groupBox15)
-        self.layout.addWidget(self.groupBox2)
-        self.layout.addWidget(self.groupBox3)
-        self.layout.addWidget(self.groupBox4)
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
+        
+        self.groupBox4Layout.addWidget(self.tableWidget)
+
+        self.layout.addWidget(self.groupBox1, 0, 0)
+        self.layout.addWidget(self.groupBox15, 1, 0)
+        self.layout.addWidget(self.groupBox2, 2, 0)
+        self.layout.addWidget(self.groupBox4, 0, 1)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(500, 500)  
+        self.resize(2000, 2000)  
+        
+    def onClicked(self):
+            if self.b1.isChecked():
+                if platform == "darwin":
+                    self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/validation_curves_random_forest_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
+                elif platform == "win32":
+                    self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\validation_curves_random_forest_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
 
-
+            if self.b2.isChecked():
+                if platform == "darwin":
+                    self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/validation_curves_knn_regressor_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
+                elif platform == "win32":
+                    self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\validation_curves_knn_regressor_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
+                    
+            if self.b3.isChecked():
+                if platform == "darwin":
+                    self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/validation_curves_gradient_boost_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
+                elif platform == "win32":
+                    self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\validation_curves_gradient_boost_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
+                    
+                    
+            if self.b4.isChecked():
+                if platform == "darwin":
+                    self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/model_comparison_tuning_model1.png')
+                    self.pix2 = self.pix.scaled(1000, 500)
+                    self.label_image.setPixmap(self.pix2)
+                elif platform == "win32":   
+                    self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\model_comparison_tuning_model1.png')
+                    self.pix2 = self.pix.scaled(1000, 500)
+                    self.label_image.setPixmap(self.pix2)
+                  
+                    
 class Hyp2(QMainWindow):
 
     def __init__(self):
@@ -657,16 +789,55 @@ class Hyp2(QMainWindow):
         self.label = QLabel('We tried to tune our best model, the Random Forest model to see how much better we can make it.')
         self.groupBox1Layout.addWidget(self.label)
         
-        self.groupBox2 = QGroupBox('Learning Curves')
+        self.b1 = QRadioButton('Learning Curves')
+        self.b1.toggled.connect(self.onClicked)
+
+        self.b2 = QRadioButton('Validation Curves')
+        self.b2.toggled.connect(self.onClicked)
+        
+        self.groupBox15 = QGroupBox('Plot Picker')
+        self.groupBox15Layout= QHBoxLayout()
+        self.groupBox15.setLayout(self.groupBox15Layout)
+        
+        self.groupBox15Layout.addWidget(self.b1)
+        self.groupBox15Layout.addWidget(self.b2)
+        
+        self.groupBox2 = QGroupBox('Curve Plots')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        self.label_image = QLabel()
+        
+        self.groupBox2Layout.addWidget(self.label_image)
+        
         self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox15)
         self.layout.addWidget(self.groupBox2)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(500, 500)  
+        self.showMaximized()
 
+
+    def onClicked(self):
+            if self.b1.isChecked():
+                if platform == "darwin":
+                    self.pix = QPixmap(get_repo_root() + '/results/3. Tuning 2 & Model Selection/learning_curves_random_forest_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
+                elif platform == "win32":
+                    self.pix = QPixmap(get_repo_root_w() + '\\results\\3. Tuning 2 & Model Selection\\learning_curves_random_forest_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
+                    
+            if self.b2.isChecked():
+                if platform == "darwin":
+                     self.pix = QPixmap(get_repo_root() + '/results/3. Tuning 2 & Model Selection/validation_curves_random_forest_tuned.png')
+                     self.pix2 = self.pix.scaled(1200, 800)
+                     self.label_image.setPixmap(self.pix2)
+                elif platform == "win32":
+                    self.pix = QPixmap(get_repo_root_w() + '\\results\\3. Tuning 2 & Model Selection\\validation_curves_random_forest_tuned.png')
+                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.label_image.setPixmap(self.pix2)
 
 class ModelSelection(QMainWindow):
 
@@ -693,17 +864,48 @@ class ModelSelection(QMainWindow):
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        self.label_image = QLabel()
+        
+        if platform == "darwin":
+            self.pix = QPixmap(get_repo_root() + '/results/4. Results Evaluation/most_important_features_results_eval.png')
+            self.pix2 = self.pix.scaled(1000, 500)
+            self.label_image.setPixmap(self.pix2)
+            self.all_data = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/gridsearchcv_results.csv')
+        elif platform == "win32":   
+            self.pix = QPixmap(get_repo_root_w() + '\\results\\4. Results Evaluation\\most_important_features_results_eval.png')
+            self.pix2 = self.pix.scaled(1000, 500)
+            self.label_image.setPixmap(self.pix2)
+            self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\4. Results Evaluation\\gridsearchcv_results.csv')
+            
+        NumRows = len(self.all_data.index)   
+        
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setColumnCount(len(self.all_data.columns))
+        self.tableWidget.setRowCount(NumRows)
+        self.tableWidget.setHorizontalHeaderLabels(self.all_data.columns)
+
+        for i in range(NumRows):
+            for j in range(len(self.all_data.columns)):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(self.all_data.iat[i, j])))
+
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
+        
+        self.groupBox2Layout.addWidget(self.tableWidget)
+        
         self.groupBox3 = QGroupBox('Most Important Features')
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
+        
+        self.groupBox3Layout.addWidget(self.label_image)
         
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(500, 500)  
+        self.resize(1000, 1000)  
 
 
 class ModelResults(QMainWindow):
@@ -735,8 +937,7 @@ class ModelResults(QMainWindow):
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
-        self.label = QLabel('Our model can predict the weighted average movie IMDB rating with an average error of +- 0.93 while a random model has an average error of +- 2.9.')
-        self.groupBox3Layout.addWidget(self.label)
+        self.label2 = QLabel('Our model can predict the weighted average movie IMDB rating with an average error of +- 0.93 while a random model has an average error of +- 2.9.')
         
         self.groupBox4 = QGroupBox('Prediction Results')
         self.groupBox4Layout= QHBoxLayout()
@@ -746,6 +947,59 @@ class ModelResults(QMainWindow):
         self.groupBox5Layout= QHBoxLayout()
         self.groupBox5.setLayout(self.groupBox5Layout)
         
+        self.label_image = QLabel()
+        
+        if platform == "darwin":
+            self.pix = QPixmap(get_repo_root() + '/results/model_plots/vs_random_results_eval.png')
+            self.pix2 = self.pix.scaled(720,360)
+            self.label_image.setPixmap(self.pix2)
+            self.all_data = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/best_model_evaluation_results.csv')
+            self.all_data2 = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/prediction_results.csv')
+        elif platform == "win32":   
+            self.pix = QPixmap(get_repo_root_w() + '\\results\\model_plots\\vs_random_results_eval.png')
+            self.pix2 = self.pix.scaled(720,360)
+            self.label_image.setPixmap(self.pix2)
+            self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\best_model_evaluation_results.csv')
+            self.all_data2 = pd.read_csv(get_repo_root_w() + '\\results\\prediction_results.csv')
+            
+        self.all_dataHead = self.all_data.head(6) 
+            
+        NumRows = len(self.all_dataHead.index)
+        
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setColumnCount(len(self.all_dataHead.columns))
+        self.tableWidget.setRowCount(NumRows)
+        self.tableWidget.setHorizontalHeaderLabels(self.all_dataHead.columns)
+
+        for i in range(NumRows):
+            for j in range(len(self.all_dataHead.columns)):
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(self.all_dataHead.iat[i, j])))
+
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
+        
+        
+        self.all_data2Head = self.all_data2.head(10) 
+            
+        NumRows = len(self.all_data2Head.index)
+        
+        self.tableWidget2 = QTableWidget()
+        self.tableWidget2.setColumnCount(len(self.all_data2Head.columns))
+        self.tableWidget2.setRowCount(NumRows)
+        self.tableWidget2.setHorizontalHeaderLabels(self.all_data2Head.columns)
+
+        for i in range(NumRows):
+            for j in range(len(self.all_data2Head.columns)):
+                self.tableWidget2.setItem(i, j, QTableWidgetItem(str(self.all_data2Head.iat[i, j])))
+
+        self.tableWidget2.resizeColumnsToContents()
+        self.tableWidget2.resizeRowsToContents()
+            
+        self.groupBox2Layout.addWidget(self.tableWidget)    
+        self.groupBox3Layout.addWidget(self.label2)
+        self.groupBox4Layout.addWidget(self.tableWidget2)  
+        self.groupBox5Layout.addWidget(self.label_image)    
+        
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
@@ -753,7 +1007,7 @@ class ModelResults(QMainWindow):
         self.layout.addWidget(self.groupBox5)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(500, 500)  
+        self.resize(1000, 1000)  
 
 # Prediction window
 class predi(QMainWindow):
@@ -895,7 +1149,7 @@ class Menu(QMainWindow):
 
         # Title
 
-        self.Title = 'GUI for project'
+        self.Title = 'Group 2 Final Project'
 
         #call intiUI to create elements for menu
 
@@ -1072,6 +1326,8 @@ class Menu(QMainWindow):
 #::------------------------
 
 if __name__ == "__main__":
+    unzip_results()
+    # change these to your file paths if you want to run the GUI by itself
     df = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\moviesdf.csv')
     pred = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\predictions_with_ids.csv')
     app = QApplication(sys.argv)  # creates the PyQt5 application
