@@ -1,4 +1,8 @@
-# This file runs our modeling 
+'''
+Script to run and perform modeling steps.
+
+@author: Josh Ting
+'''# This file runs our modeling 
 import pandas as pd
 import numpy as np
 

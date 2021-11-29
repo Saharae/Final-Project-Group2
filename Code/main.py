@@ -33,12 +33,7 @@ if __name__ == "__main__":
     print('Executing', __name__)
     # Run data download and setup
     print('Downloading Data (this may take around a minute)')
-
-    # temp try except block just to prevent hitting limits form data downloader
-    try:
-        ratings, movies, names, title_principals, inflation, pred = down.downloader()
-    except:
-        ratings, movies, names, title_principals, inflation = pre.load_all(pre.get_repo_root())
+    ratings, movies, names, title_principals, inflation, pred = down.downloader()
 
     # Data preprocessing
     print('Doing preprocessing...')
@@ -50,13 +45,14 @@ if __name__ == "__main__":
 
     # Modeling
     print('Doing modeling...')
-    # Set run_model_tuning = False to save time and use already selected best model, 
-    # otherwise it will take a long time to go through all parameters in GridSearchCV.
+    # For modeling, set run_model_tuning = False to save time and use already selected best model, 
+    # otherwise it will take a long time (over an hour) to go through all parameters in GridSearchCV.
     
     # If you still want to go through model tuning but for a much smaller set of parameters, 
     # set run_model_tuning = True, fast_gridsearch = True and it will be roughly 10 mins.
 
-    # run_model_tuning = False will take roughly 
+    # run_model_tuning = False, fast_gridsearch = True will just 
+    # load the already found optimized model and take roughly 5 mins
     
     # Make sure you have results/ directory from GitHub is unzipped if running run_model_tuning as False
     mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched,
