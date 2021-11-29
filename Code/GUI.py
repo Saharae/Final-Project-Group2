@@ -611,7 +611,9 @@ class ModelstoTry(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('We have selected a handful of promising regression models to try with our data.')
+        self.label = QLabel('We started our modeling phase by first selecting a handful of promising models that work with regression problems.\
+                            \nOur selected models are linear regression, Random Forest, Gradient Boosting, Adaptive Boosting, and K-Nearest Neighbors.\
+                            \nThe out of the box Random Forest and Gradient Boosting models seem to perform best with the 2 lowest validation MSEs.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox2 = QGroupBox('MSE Plot')
@@ -653,7 +655,8 @@ class Hyp1(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('We selected the top 3 base models and tuned them to see if performance increases.')
+        self.label = QLabel('We selected the top 3 base models and tuned them by setting a list of hyperparameters to try in GridSearch validation to see if performance increases.\
+                             \nOur best model still seems to be the Random Forest. Let us focus on just that model in the next phase.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox15 = QGroupBox('Plot Picker')
@@ -783,7 +786,10 @@ class Hyp2(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('We tried to tune our best model, the Random Forest model to see how much better we can make it.')
+        self.label = QLabel('We tried to tune our best model, the Random Forest model to see how much better we can make it.\
+                             \nOur Random Forest showed signs of overfitting so we tried to set hyperparameters to regularize the model\
+                             \nsuch as increasing the number of trees, the min samples per leaf node, \
+                             \nthe max number of features per tree, and the max depth each tree can go.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.b1 = QRadioButton('Learning Curves')
@@ -854,7 +860,7 @@ class ModelSelection(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('This is our selected model.')
+        self.label = QLabel('This is our final selected model.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox2 = QGroupBox('Gridsearch Results 2')
@@ -923,7 +929,9 @@ class ModelResults(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('Our model is much better than a random model.')
+        self.label = QLabel('After selecting our best Random Forest model, we compared it with a random model and calculated the average MSE between the two.\
+                             \nOur model performed much better than the random model and was proved statistically significant using a 2-Sample T-Test with a\
+                             \nnull hypothesis that the two distributions are the same.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox2 = QGroupBox('Our Model')
@@ -940,7 +948,7 @@ class ModelResults(QMainWindow):
         self.groupBox4Layout= QHBoxLayout()
         self.groupBox4.setLayout(self.groupBox4Layout)
         
-        self.groupBox5 = QGroupBox('Our Model Versus Random')
+        self.groupBox5 = QGroupBox('MSE: Our Model Versus Random')
         self.groupBox5Layout= QHBoxLayout()
         self.groupBox5.setLayout(self.groupBox5Layout)
         

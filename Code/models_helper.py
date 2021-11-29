@@ -1,3 +1,8 @@
+'''
+Helper objects and functions to perform modeling on dataset.
+
+@author: Josh Ting
+'''
 # This file contains the models that we used for our dataset
 import pandas as pd
 import numpy as np
