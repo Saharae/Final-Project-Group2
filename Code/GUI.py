@@ -6,9 +6,10 @@ Created on Fri Nov  5 17:04:12 2021
 """
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as grd
 import pandas as pd
 import sys
-from PyQt5.QtWidgets import QMainWindow, QAction, QMenu, QApplication
+from PyQt5.QtWidgets import QMainWindow, QAction, QApplication
 import webbrowser
 from PyQt5.QtWidgets import QSizePolicy
 
@@ -20,20 +21,14 @@ from PyQt5.QtWidgets import QGroupBox    # Group Box
 
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem
 
-from numpy.polynomial.polynomial import polyfit
-import numpy as np
 from PyQt5.QtGui import QPixmap
 
 #----------------------------------------------------------------------
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMessageBox
 
-from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import  QWidget,QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
-
-from PyQt5.QtCore import QSize 
 
 
 # These components are essential for creating the graphics in pqt5 
@@ -153,7 +148,7 @@ class NumericalVars(QMainWindow):
         self.layout.addStretch(1)
 
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(2000, 2000)                         # Resize the window
+        self.showMaximized()                        # Resize the window
     
     def onClicked(self):
         if self.b1.isChecked():
@@ -338,7 +333,7 @@ class CategoricalVars(QMainWindow):
         self.layout.addStretch(1)
 
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(1000, 1000)                      # Resize the window
+        self.showMaximized()                       # Resize the window
 
 
     def onClicked2(self):
@@ -524,15 +519,15 @@ class TargetVar(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.groupBox15 = QGroupBox('Navigation Bar')
-        self.groupBox15Layout= QHBoxLayout()
-        self.groupBox15.setLayout(self.groupBox15Layout)
-        
-        self.groupBox2 = QGroupBox('Graphic')
+        self.groupBox2 = QGroupBox('Plot Picker')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
-        self.groupBox3 = QGroupBox('Graphic2')
+        self.groupBox25 = QGroupBox('Navigation Bar')
+        self.groupBox25Layout= QHBoxLayout()
+        self.groupBox25.setLayout(self.groupBox25Layout)
+        
+        self.groupBox3 = QGroupBox('Graphic')
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
@@ -542,35 +537,54 @@ class TargetVar(QMainWindow):
         self.label = QLabel("The average vote for an IMDb movie is calculated by the averaging all the ratings for a movie. However, IMDb uses weighted average vote over raw average. \nThis allows IMDb to weight votes differently in order to detect unusual activity, like review-bombing. This allows IMDb to prevent users from drastically changing a movie's score. \nThe mean weighted average vote is " + mean + ' and the standard deviation is ' +std + '. This will be our target variable to predict.')
         self.groupBox1Layout.addWidget(self.label)
         
-        self.fig = Figure(figsize= (14, 14))
-        self.ax1 = self.fig.add_subplot(111)
+        self.fig = Figure()
+        gs00 = grd.GridSpec(1, 2, width_ratios=[10,1])
+        self.ax1 = self.fig.add_subplot(gs00[0])
+        self.cax = self.fig.add_subplot(gs00[1])
         self.canvas = FigureCanvas(self.fig)
+        
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        
+        self.groupBox25Layout.addWidget(self.toolbar)
+        
+        self.b1 = QRadioButton("Distribution")
+        self.b1.toggled.connect(self.onClicked)
+
+        self.b2 = QRadioButton("Heatmap")
+        self.b2.toggled.connect(self.onClicked)
+        
+        self.groupBox2Layout.addWidget(self.b1)
+        self.groupBox2Layout.addWidget(self.b2)
         
 
         self.canvas.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.canvas.updateGeometry()
         
-        self.groupBox2Layout.addWidget(self.canvas)
-        
-        sns.histplot(data = df, x = 'weighted_average_vote', ax = self.ax1, bins = 40, kde = True)
-        self.ax1.set_title('Distribution of Weighted Votes')
-        sns.despine()
-        self.fig.tight_layout()
-        self.fig.canvas.draw_idle()
-        
-        
-        self.fig2 = Figure(figsize= (14, 14))
-        self.ax2 = self.fig2.add_subplot(111)
-        self.canvas2 = FigureCanvas(self.fig2)
-        
-        self.canvas2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.groupBox3Layout.addWidget(self.canvas)
 
-        self.canvas2.updateGeometry()
         
-        self.groupBox3Layout.addWidget(self.canvas2)
+        self.layout.addWidget(self.groupBox1)
+        self.layout.addWidget(self.groupBox2)
+        self.layout.addWidget(self.groupBox25)
+        self.layout.addWidget(self.groupBox3)
         
-        sns.heatmap(df[['duration', 'weighted_average_vote', 'budget_adjusted',
+        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
+        self.showMaximized()                      # Resize the window
+
+    def onClicked(self):
+        if self.b1.isChecked():
+            self.ax1.clear()
+            self.cax.set_visible(False)
+            sns.histplot(data = df, x = 'weighted_average_vote', ax = self.ax1, bins = 40, kde = True)
+            self.ax1.set_title('Distribution of Weighted Votes')
+            sns.despine()
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
+        if self.b2.isChecked():
+            self.ax1.clear()
+            self.cax.set_visible(True)
+            sns.heatmap(df[['duration', 'weighted_average_vote', 'budget_adjusted',
                     'usa_gross_income_adjusted', 'worldwide_gross_income_adjusted',
                     'date_published_year', 'date_published_month', 'date_published_day',
                     'actors_weighted_frequency', 'director_weighted_frequency',
@@ -578,19 +592,10 @@ class TargetVar(QMainWindow):
                     'title_ratio_long_words', 'title_ratio_vowels',
                     'title_ratio_capital_letters', 'description_n_words',
                     'description_ratio_long_words', 'description_ratio_vowels',
-                    'description_ratio_capital_letters', ]].corr(), vmin = -1, vmax = 1, ax = self.ax2, cmap = 'coolwarm')
-
-        self.ax2.set_title('Correlation Matrix of Numeric Variables')
-    
-        self.fig2.tight_layout()
-        self.fig2.canvas.draw_idle()
-        
-        self.layout.addWidget(self.groupBox1)
-        self.layout.addWidget(self.groupBox2)
-        self.layout.addWidget(self.groupBox3)
-        
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(1000, 1000)                      # Resize the window
+                    'description_ratio_capital_letters', ]].corr(), vmin = -1, vmax = 1, ax = self.ax1, cmap = 'coolwarm', cbar_ax=self.cax)
+            self.ax1.set_title('Correlation Matrix of Numeric Variables')
+            self.fig.tight_layout()
+            self.fig.canvas.draw_idle()
 
 
 class ModelstoTry(QMainWindow):
@@ -635,7 +640,7 @@ class ModelstoTry(QMainWindow):
         self.layout.addWidget(self.groupBox2)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(500, 500)  
+        self.showMaximized()    
         
 class Hyp1(QMainWindow):
 
@@ -723,7 +728,7 @@ class Hyp1(QMainWindow):
         self.layout.addWidget(self.groupBox4, 0, 1)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(2000, 2000)  
+        self.showMaximized()   
         
     def onClicked(self):
             if self.b1.isChecked():
@@ -908,7 +913,7 @@ class ModelSelection(QMainWindow):
         self.layout.addWidget(self.groupBox3)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(1000, 1000)  
+        self.showMaximized()  
 
 
 class ModelResults(QMainWindow):
@@ -1012,7 +1017,7 @@ class ModelResults(QMainWindow):
         self.layout.addWidget(self.groupBox5)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(1000, 1000)  
+        self.showMaximized()    
 
 # Prediction window
 class predi(QMainWindow):
@@ -1024,7 +1029,7 @@ class predi(QMainWindow):
         #::--------------------------------------------------------
         super(predi, self).__init__()
         
-        self.Title = 'Prediction Tool'
+        self.Title = 'Prediction Game'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)   # Creates vertical layout
@@ -1097,7 +1102,7 @@ class predi(QMainWindow):
         self.layout.addWidget(self.groupBox3)
 
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.resize(1000, 1000)                         # Resize the window
+        self.showMaximized()                        # Resize the window
 
     def on_click(self):
         global movie
@@ -1147,10 +1152,10 @@ class Menu(QMainWindow):
 
         super().__init__()
         # set size
-        self.left = 300
-        self.top = 300
-        self.width = 700
-        self.height = 700
+        self.left = 900
+        self.top = 450
+        self.width = 400
+        self.height = 100
 
         # Title
 
@@ -1182,7 +1187,7 @@ class Menu(QMainWindow):
         
         model = mainMenu.addMenu('Modelling') 
         
-        pred = mainMenu.addMenu('Prediction Tool') 
+        pred = mainMenu.addMenu('Prediction Game') 
         
 
         # Exit action
@@ -1197,13 +1202,18 @@ class Menu(QMainWindow):
         
         # exit tabs
         
+        file3Button = QAction("About Us", self)   
+        file3Button.setStatusTip("Information about our project")   
+        file3Button.triggered.connect(self.file3)            
+        
         file2Button = QAction("Link to our report", self)   
         file2Button.setStatusTip("Here you can find the full report of our results")   
         file2Button.triggered.connect(self.file2)    
         
-        file3Button = QAction("About Us", self)   
-        file3Button.setStatusTip("Information about our project")   
-        file3Button.triggered.connect(self.file3)    
+        
+        file4Button = QAction("Link to the dataset", self)   
+        file4Button.setStatusTip("Link to the dataset on Kaggle")   
+        file4Button.triggered.connect(self.file4) 
         
         
         exitButton = QAction(QIcon('enter.png'), '&Exit', self)
@@ -1212,8 +1222,9 @@ class Menu(QMainWindow):
         exitButton.triggered.connect(self.close)
         
         
-        fileMenu.addAction(file2Button)
         fileMenu.addAction(file3Button)
+        fileMenu.addAction(file2Button)
+        fileMenu.addAction(file4Button)
         fileMenu.addAction(exitButton)
         
         # preprocessing tabs
@@ -1275,10 +1286,13 @@ class Menu(QMainWindow):
         self.show()
     
     def file2(self):
-        webbrowser.open('http://www.google.com') # this will be our report
+        webbrowser.open('https://docs.google.com/document/d/15mzM34VmwNzyYF0Mygbi-N_v0qPVQXY8LAIWD_Nz-p8/edit?usp=sharing') # this will be our report
         
     def file3(self):
-        QMessageBox.about(self, "About Us", "We created this project in Fall 2021 as part of our Intro to Data Mining Course at George Washington University.")
+        QMessageBox.about(self, "About Us", "We created this project in fall 2021 as part of our Intro to Data Mining Course at George Washington University. In this project, we took Stefano Leone’s IMDb dataset on Kaggle, and used different modeling techniques to predict the weighted average vote of movies based on their features. ")
+    
+    def file4(self):
+        webbrowser.open('https://www.kaggle.com/stefanoleone992/imdb-extensive-dataset')
     
     def preproc1(self):
         dialog = NumericalVars()
