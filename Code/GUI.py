@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import QGroupBox    # Group Box
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem
 
 from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
 
 #----------------------------------------------------------------------
 from PyQt5.QtGui import QIcon
@@ -628,11 +629,11 @@ class ModelstoTry(QMainWindow):
         self.label_image = QLabel()
         if platform == "darwin":
             self.pix = QPixmap(get_repo_root() + '/results/1. Base Model Comparison/model_comparison_base_all_features.png')
-            self.pix2 = self.pix.scaled(1000, 500)
+            self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
             self.label_image.setPixmap(self.pix2)
         elif platform == "win32":
             self.pix = QPixmap(get_repo_root_w() + '\\results\\1. Base Model Comparison\\model_comparison_base_all_features.png')
-            self.pix2 = self.pix.scaled(1000, 500)
+            self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
             self.label_image.setPixmap(self.pix2)
         self.groupBox2Layout.addWidget(self.label_image)
         
@@ -660,8 +661,10 @@ class Hyp1(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('We selected the top 3 base models and tuned them by setting a list of hyperparameters to try in GridSearch validation to see if performance increases.\
-                             \nAs seen in the Model Comparison graph, our best model still seems to be the Random Forest. Let us focus on just that model in the next phase.')
+        self.label = QLabel('We selected the top 3 base models and tuned them by setting a list of \
+                            \nhyperparameters to try in GridSearch validation to see if performance increases.\
+                            \nAs seen in the Model Comparison graph, our best model still seems to be the \
+                            \nRandom Forest. Let us focus on just that model in the next phase.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox15 = QGroupBox('Plot Picker')
@@ -723,9 +726,9 @@ class Hyp1(QMainWindow):
         self.groupBox4Layout.addWidget(self.tableWidget)
 
         self.layout.addWidget(self.groupBox1, 0, 0)
-        self.layout.addWidget(self.groupBox15, 1, 0)
-        self.layout.addWidget(self.groupBox2, 2, 0)
-        self.layout.addWidget(self.groupBox4, 0, 1)
+        self.layout.addWidget(self.groupBox15, 0, 1)
+        self.layout.addWidget(self.groupBox2, 1, 1)
+        self.layout.addWidget(self.groupBox4, 1, 0)
         
         self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
         self.showMaximized()   
@@ -734,42 +737,42 @@ class Hyp1(QMainWindow):
             if self.b1.isChecked():
                 if platform == "darwin":
                     self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/validation_curves_random_forest_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                 elif platform == "win32":
                     self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\validation_curves_random_forest_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
 
             if self.b2.isChecked():
                 if platform == "darwin":
                     self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/validation_curves_knn_regressor_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                 elif platform == "win32":
                     self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\validation_curves_knn_regressor_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                     
             if self.b3.isChecked():
                 if platform == "darwin":
                     self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/validation_curves_gradient_boost_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                 elif platform == "win32":
                     self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\validation_curves_gradient_boost_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                     
                     
             if self.b4.isChecked():
                 if platform == "darwin":
                     self.pix = QPixmap(get_repo_root() + '/results/2. Tuning 1/model_comparison_tuning_model1.png')
-                    self.pix2 = self.pix.scaled(1000, 500)
+                    self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                 elif platform == "win32":   
                     self.pix = QPixmap(get_repo_root_w() + '\\results\\2. Tuning 1\\model_comparison_tuning_model1.png')
-                    self.pix2 = self.pix.scaled(1000, 500)
+                    self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                   
                     
@@ -791,10 +794,8 @@ class Hyp2(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('We tried to tune our best model, the Random Forest model to see how much better we can make it.\
-                             \nOur Random Forest showed signs of overfitting so we tried to set hyperparameters to regularize the model\
-                             \nsuch as increasing the number of trees, the min samples per leaf node, \
-                             \nthe max number of features per tree, and the max depth each tree can go.')
+        self.label = QLabel('We tried to tune our best model, the Random Forest model to see how much better we can make it. Our Random Forest showed signs of overfitting so we tried to set hyperparameters to regularize the model \
+                            \nsuch as increasing the number of trees, the min samples per leaf node, the max number of features per tree, and the max depth each tree can go.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.b1 = QRadioButton('Learning Curves')
@@ -830,21 +831,21 @@ class Hyp2(QMainWindow):
             if self.b1.isChecked():
                 if platform == "darwin":
                     self.pix = QPixmap(get_repo_root() + '/results/3. Tuning 2 & Model Selection/learning_curves_random_forest_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                 elif platform == "win32":
                     self.pix = QPixmap(get_repo_root_w() + '\\results\\3. Tuning 2 & Model Selection\\learning_curves_random_forest_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                     
             if self.b2.isChecked():
                 if platform == "darwin":
                      self.pix = QPixmap(get_repo_root() + '/results/3. Tuning 2 & Model Selection/validation_curves_random_forest_tuned.png')
-                     self.pix2 = self.pix.scaled(1200, 800)
+                     self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                      self.label_image.setPixmap(self.pix2)
                 elif platform == "win32":
                     self.pix = QPixmap(get_repo_root_w() + '\\results\\3. Tuning 2 & Model Selection\\validation_curves_random_forest_tuned.png')
-                    self.pix2 = self.pix.scaled(1200, 800)
+                    self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
 
 class ModelSelection(QMainWindow):
@@ -876,12 +877,12 @@ class ModelSelection(QMainWindow):
         
         if platform == "darwin":
             self.pix = QPixmap(get_repo_root() + '/results/4. Results Evaluation/most_important_features_results_eval.png')
-            self.pix2 = self.pix.scaled(1000, 500)
+            self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
             self.label_image.setPixmap(self.pix2)
             self.all_data = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/gridsearchcv_results.csv')
         elif platform == "win32":   
             self.pix = QPixmap(get_repo_root_w() + '\\results\\4. Results Evaluation\\most_important_features_results_eval.png')
-            self.pix2 = self.pix.scaled(1000, 500)
+            self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
             self.label_image.setPixmap(self.pix2)
             self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\4. Results Evaluation\\gridsearchcv_results.csv')
             
@@ -934,9 +935,7 @@ class ModelResults(QMainWindow):
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
-        self.label = QLabel('After selecting our best Random Forest model, we compared it with a random model and calculated the average MSE between the two.\
-                             \nOur model performed much better than the random model and was proved statistically significant using a 2-Sample T-Test with a\
-                             \nnull hypothesis that the two distributions are the same.')
+        self.label = QLabel('After selecting our best Random Forest model, we compared it with a random model and calculated the average MSE between the two. Our model performed much better than the random model and was proved statistically significant using a 2-Sample T-Test with a null hypothesis that the two distributions are the same.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox2 = QGroupBox('Our Model')
@@ -961,13 +960,13 @@ class ModelResults(QMainWindow):
         
         if platform == "darwin":
             self.pix = QPixmap(get_repo_root() + '/results/4. Results Evaluation/vs_random_results_eval.png')
-            self.pix2 = self.pix.scaled(720,360)
+            self.pix2 = self.pix.scaled(720,360, transformMode=Qt.SmoothTransformation)
             self.label_image.setPixmap(self.pix2)
             self.all_data = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/best_model_evaluation_results.csv')
             self.all_data2 = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/prediction_results.csv')
         elif platform == "win32":   
             self.pix = QPixmap(get_repo_root_w() + '\\results\\4. Results Evaluation\\vs_random_results_eval.png')
-            self.pix2 = self.pix.scaled(720,360)
+            self.pix2 = self.pix.scaled(720,360, transformMode=Qt.SmoothTransformation)
             self.label_image.setPixmap(self.pix2)
             self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\best_model_evaluation_results.csv')
             self.all_data2 = pd.read_csv(get_repo_root_w() + '\\results\\prediction_results.csv')
