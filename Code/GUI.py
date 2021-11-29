@@ -612,7 +612,7 @@ class ModelstoTry(QMainWindow):
         self.groupBox1.setLayout(self.groupBox1Layout)
         
         self.label = QLabel('We started our modeling phase by first selecting a handful of promising models that work with regression problems.\
-                            \nOur selected models are linear regression, Random Forest, Gradient Boosting, Adaptive Boosting, and K-Nearest Neighbors.\
+                            \nOur selected models are Linear Regression, Random Forest, Gradient Boosting, Adaptive Boosting, and K-Nearest Neighbors.\
                             \nThe out of the box Random Forest and Gradient Boosting models seem to perform best with the 2 lowest validation MSEs.')
         self.groupBox1Layout.addWidget(self.label)
         
@@ -656,7 +656,7 @@ class Hyp1(QMainWindow):
         self.groupBox1.setLayout(self.groupBox1Layout)
         
         self.label = QLabel('We selected the top 3 base models and tuned them by setting a list of hyperparameters to try in GridSearch validation to see if performance increases.\
-                             \nOur best model still seems to be the Random Forest. Let us focus on just that model in the next phase.')
+                             \nAs seen in the Model Comparison graph, our best model still seems to be the Random Forest. Let us focus on just that model in the next phase.')
         self.groupBox1Layout.addWidget(self.label)
         
         self.groupBox15 = QGroupBox('Plot Picker')
@@ -938,7 +938,7 @@ class ModelResults(QMainWindow):
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
-        self.groupBox3 = QGroupBox('Model idk')
+        self.groupBox3 = QGroupBox('Model vs Random')
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
@@ -955,13 +955,13 @@ class ModelResults(QMainWindow):
         self.label_image = QLabel()
         
         if platform == "darwin":
-            self.pix = QPixmap(get_repo_root() + '/results/model_plots/vs_random_results_eval.png')
+            self.pix = QPixmap(get_repo_root() + '/results/4. Results Evaluation/vs_random_results_eval.png')
             self.pix2 = self.pix.scaled(720,360)
             self.label_image.setPixmap(self.pix2)
             self.all_data = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/best_model_evaluation_results.csv')
             self.all_data2 = pd.read_csv(get_repo_root() + '/results/4. Results Evaluation/prediction_results.csv')
         elif platform == "win32":   
-            self.pix = QPixmap(get_repo_root_w() + '\\results\\model_plots\\vs_random_results_eval.png')
+            self.pix = QPixmap(get_repo_root_w() + '\\results\\4. Results Evaluation\\vs_random_results_eval.png')
             self.pix2 = self.pix.scaled(720,360)
             self.label_image.setPixmap(self.pix2)
             self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\best_model_evaluation_results.csv')
