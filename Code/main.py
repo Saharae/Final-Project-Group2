@@ -60,11 +60,11 @@ if __name__ == "__main__":
     # run_model_tuning = False will take roughly 
     
     # Make sure you have results/ directory from GitHub is unzipped if running run_model_tuning as False
-    mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched,
-                             run_base_estimators = False, #Run base models comparison or not
-                             run_model_tuning = False, #Run hyperparameter tuning and gridsearchcv or not
-                             fast_gridsearch = True, #Skip most of gridsearchcv to run faster
-                             save_model = True) #Save best model results or not
+    # mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched,
+    #                          run_base_estimators = False, #Run base models comparison or not
+    #                          run_model_tuning = False, #Run hyperparameter tuning and gridsearchcv or not
+    #                          fast_gridsearch = True, #Skip most of gridsearchcv to run faster
+    #                          save_model = True) #Save best model results or not
 
 
     # GUI
