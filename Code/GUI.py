@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QMainWindow, QAction, QApplication
 import webbrowser
 from PyQt5.QtWidgets import QSizePolicy
 
+
 from PyQt5.QtWidgets import QCheckBox    # checkbox
 from PyQt5.QtWidgets import QPushButton  # pushbutton
 from PyQt5.QtWidgets import QLineEdit    # Lineedit
@@ -25,7 +26,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
 #----------------------------------------------------------------------
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import QMessageBox
 
 from PyQt5.QtCore import pyqtSignal
@@ -968,8 +969,8 @@ class ModelResults(QMainWindow):
             self.pix = QPixmap(get_repo_root_w() + '\\results\\4. Results Evaluation\\vs_random_results_eval.png')
             self.pix2 = self.pix.scaled(720,360, transformMode=Qt.SmoothTransformation)
             self.label_image.setPixmap(self.pix2)
-            self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\best_model_evaluation_results.csv')
-            self.all_data2 = pd.read_csv(get_repo_root_w() + '\\results\\prediction_results.csv')
+            self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\4. Results Evaluation\\best_model_evaluation_results.csv')
+            self.all_data2 = pd.read_csv(get_repo_root_w() + '\\results\\4. Results Evaluation\\prediction_results.csv')
             
         self.all_dataHead = self.all_data.head(6) 
             
@@ -1151,10 +1152,10 @@ class Menu(QMainWindow):
 
         super().__init__()
         # set size
-        self.left = 900
-        self.top = 450
-        self.width = 400
-        self.height = 100
+        self.left = 400
+        self.top = 200
+        self.width = 1000
+        self.height = 700
 
         # Title
 
@@ -1173,6 +1174,29 @@ class Menu(QMainWindow):
         self.setWindowTitle(self.Title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.statusBar()
+        
+        self.main_widget = QWidget(self)
+        
+        self.label = QLabel(self)
+        self.label.setText("Welcome to our final project! \nWe will be using modelling to predict the IMDb score of movies. \nPlease click any of the tabs above to look around.")
+        self.label.setFont(QFont("Times", 20))
+        self.label.adjustSize()
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.move(40, 100)
+        
+        self.label_image = QLabel(self)
+        
+        if platform == "darwin":
+            self.pix = QPixmap(get_repo_root() + '/adam-kritz-individual-project/IMDb-Logo.png')
+            self.pix2 = self.pix.scaled(709, 341, transformMode=Qt.SmoothTransformation)
+            self.label_image.setPixmap(self.pix2)
+        elif platform == "win32":   
+            self.pix = QPixmap(get_repo_root_w() + '\\adam-kritz-individual-project\\IMDb-Logo.png')
+            self.pix2 = self.pix.scaled(709, 341, transformMode=Qt.SmoothTransformation)
+            self.label_image.setPixmap(self.pix2)
+            
+        self.label_image.adjustSize()
+        self.label_image.move(145, 300)
         
         # 1. Create the menu bar
         # 2. Create an item in the menu bar
@@ -1203,7 +1227,13 @@ class Menu(QMainWindow):
         
         file3Button = QAction("About Us", self)   
         file3Button.setStatusTip("Information about our project")   
-        file3Button.triggered.connect(self.file3)            
+        file3Button.triggered.connect(self.file3)     
+    
+        
+        file5Button = QAction("IMDb Legal Information", self)   
+        file5Button.setStatusTip("IMDb Legal Information")   
+        file5Button.triggered.connect(self.file5) 
+        
         
         file2Button = QAction("Link to our report", self)   
         file2Button.setStatusTip("Here you can find the full report of our results")   
@@ -1222,6 +1252,7 @@ class Menu(QMainWindow):
         
         
         fileMenu.addAction(file3Button)
+        fileMenu.addAction(file5Button)
         fileMenu.addAction(file2Button)
         fileMenu.addAction(file4Button)
         fileMenu.addAction(exitButton)
@@ -1292,6 +1323,9 @@ class Menu(QMainWindow):
     
     def file4(self):
         webbrowser.open('https://www.kaggle.com/stefanoleone992/imdb-extensive-dataset')
+    
+    def file5(self):
+        QMessageBox.about(self, "IMDb License", "IMDb, IMDb.COM, and the IMDb logo are trademarks of IMDb.com, Inc. or its affiliates.")
     
     def preproc1(self):
         dialog = NumericalVars()
