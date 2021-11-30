@@ -773,7 +773,7 @@ class Plotter:
         plt.bar(self.feature_importance['Features'], self.feature_importance['Importance'], color='tab:orange')
         
         plt.xlabel('Features')
-        plt.ylabel('Mean Decrease in Impurity (Gini)')
+        plt.ylabel('Mean Decrease in Variance using MSE')
         plt.title('Feature Importance - Sorted')
         plt.xticks(rotation=90)
 
