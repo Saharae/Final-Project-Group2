@@ -5,7 +5,6 @@ Created on Fri Nov  5 17:04:12 2021
 @author: adamkritz
 """
 
-import matplotlib.pyplot as plt
 import matplotlib.gridspec as grd
 import pandas as pd
 import sys
@@ -13,27 +12,22 @@ from PyQt5.QtWidgets import QMainWindow, QAction, QApplication
 import webbrowser
 from PyQt5.QtWidgets import QSizePolicy
 
-
-from PyQt5.QtWidgets import QCheckBox    # checkbox
-from PyQt5.QtWidgets import QPushButton  # pushbutton
-from PyQt5.QtWidgets import QLineEdit    # Lineedit
-from PyQt5.QtWidgets import QRadioButton # Radio Buttons
-from PyQt5.QtWidgets import QGroupBox    # Group Box
+ 
+from PyQt5.QtWidgets import QPushButton 
+from PyQt5.QtWidgets import QLineEdit    
+from PyQt5.QtWidgets import QRadioButton 
+from PyQt5.QtWidgets import QGroupBox    
 
 from PyQt5.QtWidgets import QTableWidget,QTableWidgetItem
 
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
-#----------------------------------------------------------------------
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import QMessageBox
 
-from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import  QWidget,QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
 
-
-# These components are essential for creating the graphics in pqt5 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas 
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar 
 from matplotlib.figure import Figure 
@@ -44,6 +38,7 @@ from sys import platform
 import zipfile
 
 
+# this unzips the results folder
 def unzip_results():
     if platform == "darwin":
         with zipfile.ZipFile(get_repo_root() + "/results.zip","r") as zf:
@@ -51,7 +46,9 @@ def unzip_results():
     elif platform == "win32":
         with zipfile.ZipFile(get_repo_root_w() + "\\results.zip","r") as zf:
             zf.extractall(get_repo_root_w())
-       
+
+        
+# this takes variables from the main
 df = 0
 pred = 0
 
@@ -73,37 +70,39 @@ def take(x, y):
 class NumericalVars(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(NumericalVars, self).__init__()
 
+        # create window and main widget
         self.Title = 'Numerical Variables'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)
         
+        # variables box with buttons to pick which one
         self.groupBox1 = QGroupBox('Variables')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        # description for the variable selected
         self.groupBox2 = QGroupBox('Description')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
 
+        # graphic 1 of the variable
         self.groupBox3 = QGroupBox('Graphic 1')
         self.groupBox3Layout = QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
+        
+        # graphic 2 of the variable
         self.groupBox4 = QGroupBox('Graphic 2')
         self.groupBox4Layout = QHBoxLayout()
         self.groupBox4.setLayout(self.groupBox4Layout)
 
 
+        # button creation
         self.b1 = QRadioButton("Duration")
         self.b1.toggled.connect(self.onClicked)
-
 
         self.b2 = QRadioButton("Budget")
         self.b2.toggled.connect(self.onClicked)
@@ -118,40 +117,40 @@ class NumericalVars(QMainWindow):
         self.groupBox1Layout.addWidget(self.b2)
         self.groupBox1Layout.addWidget(self.b3)
         self.groupBox1Layout.addWidget(self.b4)
-        
+                
+        # description creation
         self.label = QLabel("")
         self.layout.addWidget(self.label)
         self.groupBox2Layout.addWidget(self.label)
     
 
         # figure and canvas figure to draw the graph is created to
-
         self.fig = Figure()
         self.ax1 = self.fig.add_subplot(111)
         self.canvas = FigureCanvas(self.fig)
     
         
         # second graph
-        
         self.fig2 = Figure()
         self.ax2 = self.fig2.add_subplot(111)
         self.canvas2 = FigureCanvas(self.fig2)
         
-        #self.toolbar = NavigationToolbar(self.canvas2, self)
         
         self.groupBox3Layout.addWidget(self.canvas)
-        
         self.groupBox4Layout.addWidget(self.canvas2)
 
+        # add it all to main widget
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
         self.layout.addWidget(self.groupBox4)
         self.layout.addStretch(1)
 
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.showMaximized()                        # Resize the window
+        # main widget sizing
+        self.setCentralWidget(self.main_widget)      
+        self.showMaximized()                        
     
+    # function for each button
     def onClicked(self):
         if self.b1.isChecked():
             mean = str(round(df['duration'].mean()))
@@ -242,33 +241,35 @@ class NumericalVars(QMainWindow):
 class CategoricalVars(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(CategoricalVars, self).__init__()
 
+        # create window and main widget
         self.Title = 'Categorical Variables'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
-        self.layout = QVBoxLayout(self.main_widget)   # Creates vertical layout
+        self.layout = QVBoxLayout(self.main_widget)
         
+        # variables box with buttons to pick which one 
         self.groupBox1 = QGroupBox('Variables')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        # description for each variable
         self.groupBox2 = QGroupBox('Description')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
 
+        # graphic 1 of the variable
         self.groupBox3 = QGroupBox('Graphic 1')
         self.groupBox3Layout = QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)# Creates vertical layout
         
+        # graphic 2 of the variable
         self.groupBox4 = QGroupBox('Graphic 2')
         self.groupBox4Layout = QHBoxLayout()
         self.groupBox4.setLayout(self.groupBox4Layout)
 
+        # button creation
         self.b1 = QRadioButton("Title")
         self.b1.toggled.connect(self.onClicked2)
 
@@ -306,10 +307,12 @@ class CategoricalVars(QMainWindow):
         self.groupBox1Layout.addWidget(self.b8)
         self.groupBox1Layout.addWidget(self.b9)
         
+        # label creation
         self.label = QLabel("")
         self.layout.addWidget(self.label)
         self.groupBox2Layout.addWidget(self.label)
 
+        # graph one creation
         self.fig = Figure()
         self.ax1 = self.fig.add_subplot(111)
         self.canvas = FigureCanvas(self.fig)
@@ -320,29 +323,28 @@ class CategoricalVars(QMainWindow):
         self.fig2 = Figure()
         self.ax2 = self.fig2.add_subplot(111)
         self.canvas2 = FigureCanvas(self.fig2)
-        
-        #self.toolbar = NavigationToolbar(self.canvas2, self)
-        
+             
         self.groupBox3Layout.addWidget(self.canvas)
         
         self.groupBox4Layout.addWidget(self.canvas2)
 
-
+        # add to main widget
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
         self.layout.addWidget(self.groupBox4)
         self.layout.addStretch(1)
 
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.showMaximized()                       # Resize the window
+        # resize main widget
+        self.setCentralWidget(self.main_widget)       
+        self.showMaximized()                      
 
-
+    # functions for buttons
     def onClicked2(self):
         if self.b1.isChecked():
-            mean = str(round(df['title_n_words'].mean()))
-            std = str(round(df['title_n_words'].std()))
-            self.label.setText('Having to do with the title of the movie. This includes: number of words in the title, the ratio of long words to short words, the ratio of vowels to not vowels, and the ratio of capital letters to lowercase letters. \nHere are two plot on the number of words and the ratio of long words. For our purposes, these will be treated as categorical variables. The mean number of words in the title is ' + mean +' and the standard deviation is ' + std + '.')
+            mean = str(round(df['title_n_words'].mean(), 2))
+            std = str(round(df['title_n_words'].std(), 2))
+            self.label.setText('Having to do with the title of the movie. This includes: number of words in the title, the ratio of long words to short words, the ratio of vowels to non-vowels, and the ratio of capital letters to lowercase letters. \nHere are two plots about the number of words and the ratio of long words. For our purposes, these will be treated as categorical variables. The mean number of words in the title is ' + mean +' and the standard deviation is ' + std + '.')
             self.ax1.clear()
             self.ax2.clear()
             self.groupBox3.show()
@@ -364,9 +366,9 @@ class CategoricalVars(QMainWindow):
             self.fig2.canvas.draw_idle()
             
         if self.b10.isChecked():
-            mean = str(round(df['description_n_words'].mean()))
-            std = str(round(df['description_n_words'].std()))
-            self.label.setText('Having to do with the IMDb description of the movie. This is similar to title, and includes: number of words in the description, the ratio of long words to short words, the ratio of vowels to not vowels, and the ratio of capital letters to lowercase letters. \nHere are two plot on the number of words and the ratio of long words. For our purposes, these will be treated as categorical variables. The mean number of words in the description is ' + mean +' and the standard deviation is ' + std + '.')
+            mean = str(round(df['description_n_words'].mean(), 2))
+            std = str(round(df['description_n_words'].std(), 2))
+            self.label.setText('Having to do with the IMDb description of the movie. This is similar to title, and includes: number of words in the description, the ratio of long words to short words, the ratio of vowels to non-vowels, and the ratio of capital letters to lowercase letters. \nHere are two plots about the number of words and the ratio of long words. For our purposes, these will be treated as categorical variables. The mean number of words in the description is ' + mean +' and the standard deviation is ' + std + '.')
             self.ax1.clear()
             self.ax2.clear()
             self.groupBox3.show()
@@ -411,7 +413,7 @@ class CategoricalVars(QMainWindow):
             self.fig2.canvas.draw_idle()
             
         if self.b3.isChecked():
-            self.label.setText('The genre of the movie. IMDb gives each movie 3 genres, resulting in many possible genre combinations. There are also many different genres that movies can have, further increasing the number of genres. \nBecause of this, we decided to binary encode the genres, as we could not easily represent each one otherwise. This results in 732 combinations of genres that we will use.')
+            self.label.setText('The genre of the movie. IMDb gives each movie three genres, resulting in many possible sets of three genres. There are also many possible genres, further increasing the number of genre combinations. \nBecause of this, we decided to binary encode the genres, as we could not easily represent each one otherwise. This results in 732 combinations of genres that we will use.')
             self.ax1.clear()
             self.ax2.clear()
             self.groupBox3.hide()
@@ -438,8 +440,10 @@ class CategoricalVars(QMainWindow):
             self.fig.canvas.draw_idle()
             
         if self.b6.isChecked():
-            mean = str(round(df['director_weighted_frequency'].mean()))
-            std = str(round(df['director_weighted_frequency'].std()))
+            mean = df['director_weighted_frequency'].mean()
+            std = df['director_weighted_frequency'].std()
+            mean = f'{mean:.5e}'
+            std = f'{std:.5e}'
             self.label.setText('The frequency of director appearance. This variable measures how often a director directs a movie compared to other directors. For our purposes, this will be represented as a categorical variable. The mean frequency is ' + mean + ' and the standard deviation is ' + std + '.')
             self.ax1.clear()
             self.ax2.clear()
@@ -454,13 +458,15 @@ class CategoricalVars(QMainWindow):
             self.fig.canvas.draw_idle()
             
         if self.b7.isChecked():
-            mean = str(round(df['writer_weighted_frequency'].mean()))
-            std = str(round(df['writer_weighted_frequency'].std()))
+            mean = df['writer_weighted_frequency'].mean()
+            std = df['writer_weighted_frequency'].std()
+            mean = f'{mean:.5e}'
+            std = f'{std:.5e}'
             self.ax1.clear()
             self.ax2.clear()
             self.groupBox3.show()
             self.groupBox4.hide()
-            self.label.setText('The frequency of writer appearance. This variable measures how often a writer writes a movie compared to other writer. For our purposes, this will be represented as a categorical variable. The mean frequency is ' + mean + ' and the standard deviation is ' + std + '.')
+            self.label.setText('The frequency of writer appearance. This variable measures how often a writer writes a movie compared to other writers. For our purposes, this will be represented as a categorical variable. The mean frequency is ' + mean + ' and the standard deviation is ' + std + '.')
             sns.histplot(data = df, x = 'writer_weighted_frequency', ax = self.ax1, bins = 20)
             self.ax1.set_title('Writer Frequency Histogram')
             self.ax1.set_xlabel('Writer Frequency')
@@ -470,8 +476,10 @@ class CategoricalVars(QMainWindow):
             self.fig.canvas.draw_idle()
             
         if self.b8.isChecked():
-            mean = str(round(df['production_company_frequency'].mean()))
-            std = str(round(df['production_company_frequency'].std()))
+            mean = df['production_company_frequency'].mean()
+            std = df['production_company_frequency'].std()
+            mean = f'{mean:.3e}'
+            std = f'{std:.3e}'
             self.ax1.clear()
             self.ax2.clear()
             self.groupBox3.show()
@@ -486,8 +494,10 @@ class CategoricalVars(QMainWindow):
             self.fig.canvas.draw_idle()
             
         if self.b9.isChecked():
-            mean = str(round(df['actors_weighted_frequency'].mean()))
-            std = str(round(df['actors_weighted_frequency'].std()))
+            mean = df['actors_weighted_frequency'].mean()
+            std = df['actors_weighted_frequency'].std()
+            mean = f'{mean:.5e}'
+            std = f'{std:.5e}'
             self.ax1.clear()
             self.ax2.clear()
             self.groupBox3.show()
@@ -506,49 +516,54 @@ class CategoricalVars(QMainWindow):
 class TargetVar(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(TargetVar, self).__init__()
         
+        # create main window and widget
         self.Title = 'Weighted Average Vote'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
         
+        # description box
         self.groupBox1 = QGroupBox('Description')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        # plot picker box with buttons
         self.groupBox2 = QGroupBox('Plot Picker')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        # navigation bar for plots
         self.groupBox25 = QGroupBox('Navigation Bar')
         self.groupBox25Layout= QHBoxLayout()
         self.groupBox25.setLayout(self.groupBox25Layout)
         
+        # create the first graphic
         self.groupBox3 = QGroupBox('Graphic')
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
-        mean = str(round(df['weighted_average_vote'].mean()))
-        std = str(round(df['weighted_average_vote'].std()))
+        # label creation
+        mean = str(round(df['weighted_average_vote'].mean(), 2))
+        std = str(round(df['weighted_average_vote'].std(), 2))
         
-        self.label = QLabel("The average vote for an IMDb movie is calculated by the averaging all the ratings for a movie. However, IMDb uses weighted average vote over raw average. \nThis allows IMDb to weight votes differently in order to detect unusual activity, like review-bombing. This allows IMDb to prevent users from drastically changing a movie's score. \nThe mean weighted average vote is " + mean + ' and the standard deviation is ' +std + '. This will be our target variable to predict.')
+        self.label = QLabel("The average vote for an IMDb movie is calculated by the averaging all the ratings for a movie. However, IMDb uses weighted average vote over raw average. \nThis allows IMDb to weight votes differently in order to detect unusual activity, like review-bombing, which prevents users from drastically changing a movie's score. \nThe mean weighted average vote is " + mean + ' and the standard deviation is ' +std + '. This will be our target variable to predict.')
         self.groupBox1Layout.addWidget(self.label)
         
+        # create graphic with 2 boxes
         self.fig = Figure()
         gs00 = grd.GridSpec(1, 2, width_ratios=[10,1])
         self.ax1 = self.fig.add_subplot(gs00[0])
         self.cax = self.fig.add_subplot(gs00[1])
         self.canvas = FigureCanvas(self.fig)
         
+        # navigation toolbar creation
         self.toolbar = NavigationToolbar(self.canvas, self)
         
         self.groupBox25Layout.addWidget(self.toolbar)
         
+        # create buttons
         self.b1 = QRadioButton("Distribution")
         self.b1.toggled.connect(self.onClicked)
 
@@ -565,15 +580,17 @@ class TargetVar(QMainWindow):
         
         self.groupBox3Layout.addWidget(self.canvas)
 
-        
+        # add boxes to main widget
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox25)
         self.layout.addWidget(self.groupBox3)
         
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.showMaximized()                      # Resize the window
+        # main widget sizing
+        self.setCentralWidget(self.main_widget)       
+        self.showMaximized()                     
 
+    # button functions
     def onClicked(self):
         if self.b1.isChecked():
             self.ax1.clear()
@@ -599,34 +616,35 @@ class TargetVar(QMainWindow):
             self.fig.tight_layout()
             self.fig.canvas.draw_idle()
 
-
+# Models to Try Window
 class ModelstoTry(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(ModelstoTry, self).__init__()
         
+        # create window and main widget
         self.Title = 'Models to Try'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget) 
         
+        # create first groupbox for background
         self.groupBox1 = QGroupBox('Background')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        # create label for background
         self.label = QLabel('We started our modeling phase by first selecting a handful of promising models that work with regression problems.\
                             \nOur selected models are Linear Regression, Random Forest, Gradient Boosting, Adaptive Boosting, and K-Nearest Neighbors.\
                             \nThe out of the box Random Forest and Gradient Boosting models seem to perform best with the 2 lowest validation MSEs.')
         self.groupBox1Layout.addWidget(self.label)
         
+        # create plot image
         self.groupBox2 = QGroupBox('MSE Plot')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        # add image to plot image
         self.label_image = QLabel()
         if platform == "darwin":
             self.pix = QPixmap(get_repo_root() + '/results/1. Base Model Comparison/model_comparison_base_all_features.png')
@@ -638,40 +656,44 @@ class ModelstoTry(QMainWindow):
             self.label_image.setPixmap(self.pix2)
         self.groupBox2Layout.addWidget(self.label_image)
         
+        # add boxes to main widget
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
+        # resize main widget
+        self.setCentralWidget(self.main_widget)       
         self.showMaximized()    
         
+# First Hyperparameter window
 class Hyp1(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(Hyp1, self).__init__()
         
+        # create window and main widget
         self.Title = 'Hyperparameter Tuning and Validation Phase I'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QGridLayout(self.main_widget) 
         
+        # create info box
         self.groupBox1 = QGroupBox('Info')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        # add text to info box
         self.label = QLabel('We selected the top 3 base models and tuned them by setting a list of \
                             \nhyperparameters to try in GridSearch validation to see if performance increases.\
                             \nAs seen in the Model Comparison graph, our best model still seems to be the \
                             \nRandom Forest. Let us focus on just that model in the next phase.')
         self.groupBox1Layout.addWidget(self.label)
         
+        # create plot picker with buttons
         self.groupBox15 = QGroupBox('Plot Picker')
         self.groupBox15Layout= QHBoxLayout()
         self.groupBox15.setLayout(self.groupBox15Layout)
         
+        # create buttons for plots
         self.b1 = QRadioButton("Random Forest")
         self.b1.toggled.connect(self.onClicked)
 
@@ -689,27 +711,30 @@ class Hyp1(QMainWindow):
         self.groupBox15Layout.addWidget(self.b2)
         self.groupBox15Layout.addWidget(self.b3)
 
-        
+        # create box to show plots
         self.groupBox2 = QGroupBox('Tuned Plots')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        # create graph are for image
         self.label_image = QLabel()
         self.groupBox2Layout.addWidget(self.label_image)
         
         
         self.label_image2 = QLabel()
         
+        # import data
         if platform == "darwin":
             self.all_data = pd.read_csv(get_repo_root() + '/results/2. Tuning 1/gridsearchcv_results.csv')
         elif platform == "win32":   
             self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\2. Tuning 1\\gridsearchcv_results.csv')
     
-        
+        # create grid search results box
         self.groupBox4 = QGroupBox('Gridsearch Results')
         self.groupBox4Layout= QHBoxLayout()
         self.groupBox4.setLayout(self.groupBox4Layout)
     
+        # add data to the table
         NumRows = len(self.all_data.index)
         
         self.tableWidget = QTableWidget()
@@ -731,9 +756,10 @@ class Hyp1(QMainWindow):
         self.layout.addWidget(self.groupBox2, 1, 1)
         self.layout.addWidget(self.groupBox4, 1, 0)
         
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
+        self.setCentralWidget(self.main_widget)     
         self.showMaximized()   
         
+    # functions for each button
     def onClicked(self):
             if self.b1.isChecked():
                 if platform == "darwin":
@@ -776,35 +802,36 @@ class Hyp1(QMainWindow):
                     self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
                   
-                    
+# Second Hyperparameter window
 class Hyp2(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(Hyp2, self).__init__()
         
+        # create window and main widget
         self.Title = 'Hyperparameter Tuning and Validation Phase II'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
         
+        # first box for info
         self.groupBox1 = QGroupBox('Info')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        # add description to box
         self.label = QLabel('We tried to tune our best model, the Random Forest model to see how much better we can make it. Our Random Forest showed signs of overfitting so we tried to set hyperparameters to regularize the model \
                             \nsuch as increasing the number of trees, the min samples per leaf node, the max number of features per tree, and the max depth each tree can go.')
         self.groupBox1Layout.addWidget(self.label)
         
+        # create buttons
         self.b1 = QRadioButton('Learning Curves')
         self.b1.toggled.connect(self.onClicked)
 
         self.b2 = QRadioButton('Validation Curves')
         self.b2.toggled.connect(self.onClicked)
         
+        # create plot picker and add buttons
         self.groupBox15 = QGroupBox('Plot Picker')
         self.groupBox15Layout= QHBoxLayout()
         self.groupBox15.setLayout(self.groupBox15Layout)
@@ -812,22 +839,26 @@ class Hyp2(QMainWindow):
         self.groupBox15Layout.addWidget(self.b1)
         self.groupBox15Layout.addWidget(self.b2)
         
+        # create box for plots
         self.groupBox2 = QGroupBox('Curve Plots')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        # add plot area to box
         self.label_image = QLabel()
         
         self.groupBox2Layout.addWidget(self.label_image)
         
+        # add boxes to main widget
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox15)
         self.layout.addWidget(self.groupBox2)
         
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
+        # resize main window
+        self.setCentralWidget(self.main_widget)      
         self.showMaximized()
 
-
+    # create button function
     def onClicked(self):
             if self.b1.isChecked():
                 if platform == "darwin":
@@ -849,33 +880,36 @@ class Hyp2(QMainWindow):
                     self.pix2 = self.pix.scaled(1200, 800, transformMode=Qt.SmoothTransformation)
                     self.label_image.setPixmap(self.pix2)
 
+# Model Selection window
 class ModelSelection(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(ModelSelection, self).__init__()
         
+        # create window and main widget
         self.Title = 'Model Selection'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget) 
         
+        # create box for info
         self.groupBox1 = QGroupBox('Info')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
         
+        # text for the box
         self.label = QLabel('This is our final selected model.')
         self.groupBox1Layout.addWidget(self.label)
         
+        # create second box for gridsearch data
         self.groupBox2 = QGroupBox('Gridsearch Results 2')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        # create image area
         self.label_image = QLabel()
         
+        # import all the data and images
         if platform == "darwin":
             self.pix = QPixmap(get_repo_root() + '/results/4. Results Evaluation/most_important_features_results_eval.png')
             self.pix2 = self.pix.scaled(1000, 500, transformMode=Qt.SmoothTransformation)
@@ -887,6 +921,7 @@ class ModelSelection(QMainWindow):
             self.label_image.setPixmap(self.pix2)
             self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\4. Results Evaluation\\gridsearchcv_results.csv')
             
+        # add data to table and table to box
         NumRows = len(self.all_data.index)   
         
         self.tableWidget = QTableWidget()
@@ -903,6 +938,7 @@ class ModelSelection(QMainWindow):
         
         self.groupBox2Layout.addWidget(self.tableWidget)
         
+        # create third box for plot window
         self.groupBox3 = QGroupBox('Most Important Features')
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
@@ -910,28 +946,28 @@ class ModelSelection(QMainWindow):
         
         self.groupBox3Layout.addWidget(self.label_image)
         
+        # add groupboxs to main window
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
         
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
+        # resize main window
+        self.setCentralWidget(self.main_widget)       
         self.showMaximized()  
 
-
+# Model Results window
 class ModelResults(QMainWindow):
 
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
         super(ModelResults, self).__init__()
         
+        # create window and main widget
         self.Title = 'Model and Results Evaluation'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
         self.layout = QVBoxLayout(self.main_widget)  
         
+        # first group box and label
         self.groupBox1 = QGroupBox('Info')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
@@ -939,24 +975,30 @@ class ModelResults(QMainWindow):
         self.label = QLabel('After selecting our best Random Forest model, we compared it with a random model and calculated the average MSE between the two. Our model performed much better than the random model and was proved statistically significant using a 2-Sample T-Test with a null hypothesis that the two distributions are the same.')
         self.groupBox1Layout.addWidget(self.label)
         
+        # second group box for data
         self.groupBox2 = QGroupBox('Our Model')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
         
+        # third group box for label
         self.groupBox3 = QGroupBox('Model vs Random')
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
         
+        # label for third gorupbox 
         self.label2 = QLabel('Our model can predict the weighted average movie IMDB rating with an average error of +- 0.93 while a random model has an average error of +- 2.9.')
         
+        # fourth groupbox data
         self.groupBox4 = QGroupBox('Prediction Results')
         self.groupBox4Layout= QHBoxLayout()
         self.groupBox4.setLayout(self.groupBox4Layout)
         
+        # fifth groupbox for image
         self.groupBox5 = QGroupBox('MSE: Our Model Versus Random')
         self.groupBox5Layout= QHBoxLayout()
         self.groupBox5.setLayout(self.groupBox5Layout)
         
+        # create image space and import data
         self.label_image = QLabel()
         
         if platform == "darwin":
@@ -972,6 +1014,7 @@ class ModelResults(QMainWindow):
             self.all_data = pd.read_csv(get_repo_root_w() + '\\results\\4. Results Evaluation\\best_model_evaluation_results.csv')
             self.all_data2 = pd.read_csv(get_repo_root_w() + '\\results\\4. Results Evaluation\\prediction_results.csv')
             
+        # move data into tables   
         self.all_dataHead = self.all_data.head(6) 
             
         NumRows = len(self.all_dataHead.index)
@@ -1005,37 +1048,36 @@ class ModelResults(QMainWindow):
         self.tableWidget2.resizeColumnsToContents()
         self.tableWidget2.resizeRowsToContents()
             
+        # add everything to boxes
         self.groupBox2Layout.addWidget(self.tableWidget)    
         self.groupBox3Layout.addWidget(self.label2)
         self.groupBox4Layout.addWidget(self.tableWidget2)  
         self.groupBox5Layout.addWidget(self.label_image)    
         
+        # add boxes to main widget
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
         self.layout.addWidget(self.groupBox4)
         self.layout.addWidget(self.groupBox5)
         
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
+        # resize main widget
+        self.setCentralWidget(self.main_widget)
         self.showMaximized()    
 
 # Prediction window
 class predi(QMainWindow):
-    send_fig = pyqtSignal(str)  # To manage the signals PyQT manages the communication
     def __init__(self):
-        #::--------------------------------------------------------
-        # Initialize the values of the class
-        # Here the class inherits all the attributes and methods from the QMainWindow
-        #::--------------------------------------------------------
+
         super(predi, self).__init__()
         
+        # create main window and widget
         self.Title = 'Prediction Game'
         self.setWindowTitle(self.Title)
         self.main_widget = QWidget(self)
-        self.layout = QVBoxLayout(self.main_widget)   # Creates vertical layout
+        self.layout = QVBoxLayout(self.main_widget)   
         
-        
-        
+        # create first description box and add text
         self.groupBox1 = QGroupBox('Description')
         self.groupBox1Layout= QHBoxLayout()
         self.groupBox1.setLayout(self.groupBox1Layout)
@@ -1043,6 +1085,7 @@ class predi(QMainWindow):
         self.label = QLabel("This tool will allow you to make predictions against our best model, to see who can come out on top!\nWe will give you a list of features of a movie selected randomly from our test set and you will predict the weighted average score.\nOur model will also predict the weighted average score, and whoever comes the closest to the real score will win! \nSince you are presumably a human, we will give you human readable features for you to make your guess. \nRemember, no cheating by looking up the movie online. And if any of the features are missing, it is because they were not in the IMDb dataset, so our model did not get them either.")
         self.groupBox1Layout.addWidget(self.label)
         
+        # create button to generate movie and add to movie
         self.groupBox15 = QGroupBox('Random Movie Generator')
         self.groupBox15Layout= QHBoxLayout()
         self.groupBox15.setLayout(self.groupBox15Layout)
@@ -1052,6 +1095,7 @@ class predi(QMainWindow):
         self.groupBox15Layout.addWidget(self.button)
         self.button.clicked.connect(self.on_click)
         
+        # create table
         self.tableWidget = QTableWidget()
         self.tableWidget.setRowCount(2)
         self.tableWidget.setColumnCount(15)
@@ -1071,15 +1115,18 @@ class predi(QMainWindow):
         self.tableWidget.setItem(0, 13, QTableWidgetItem("Genre 3"))
         self.tableWidget.setItem(0, 14, QTableWidgetItem("Region"))
         
-        self.groupBox175 = QGroupBox("Your Movie's 'Features")
+        # create box for movie features
+        self.groupBox175 = QGroupBox("Your Movie's Features")
         self.groupBox175Layout= QHBoxLayout()
         self.groupBox175.setLayout(self.groupBox175Layout)
         self.groupBox175Layout.addWidget(self.tableWidget)
         
+        # create box for guessing
         self.groupBox2 = QGroupBox('Input your guess')
         self.groupBox2Layout= QHBoxLayout()
         self.groupBox2.setLayout(self.groupBox2Layout)
 
+        # add button and area to input guess
         self.txtInputText = QLineEdit(self)
 
         self.locked = QPushButton("Lock In!",self)
@@ -1088,6 +1135,7 @@ class predi(QMainWindow):
         self.groupBox2Layout.addWidget(self.txtInputText)
         self.groupBox2Layout.addWidget(self.locked)
         
+        # create results box
         self.groupBox3 = QGroupBox("Results")
         self.groupBox3Layout= QHBoxLayout()
         self.groupBox3.setLayout(self.groupBox3Layout)
@@ -1095,15 +1143,18 @@ class predi(QMainWindow):
         self.label3 = QLabel('')
         self.groupBox3Layout.addWidget(self.label3)
 
+        # add boxes to main widget
         self.layout.addWidget(self.groupBox1)
         self.layout.addWidget(self.groupBox15)
         self.layout.addWidget(self.groupBox175)
         self.layout.addWidget(self.groupBox2)
         self.layout.addWidget(self.groupBox3)
 
-        self.setCentralWidget(self.main_widget)       # Creates the window with all the elements
-        self.showMaximized()                        # Resize the window
+        # resize main widget
+        self.setCentralWidget(self.main_widget)      
+        self.showMaximized()                        
 
+    # create button click function (autofills random data)
     def on_click(self):
         global movie
         movie = pred.sample(n = 1)
@@ -1130,7 +1181,7 @@ class predi(QMainWindow):
         self.tableWidget.setItem(1,13, QTableWidgetItem(str(movie4[13])))
         self.tableWidget.setItem(1,14, QTableWidgetItem(str(movie4[14])))
 
-
+    # create results data
     def guess(self):
         movie22 = movie[['Actual Rating', 'Predicted Rating']]
         movie23 = movie22.to_numpy()
@@ -1177,6 +1228,7 @@ class Menu(QMainWindow):
         
         self.main_widget = QWidget(self)
         
+        # add label to main menu
         self.label = QLabel(self)
         self.label.setText("Welcome to our final project! \nWe will be using modelling to predict the IMDb score of movies. \nPlease click any of the tabs above to look around.")
         self.label.setFont(QFont("Times", 20))
@@ -1184,6 +1236,7 @@ class Menu(QMainWindow):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.move(40, 100)
         
+        # add image to main window
         self.label_image = QLabel(self)
         
         if platform == "darwin":
@@ -1198,10 +1251,7 @@ class Menu(QMainWindow):
         self.label_image.adjustSize()
         self.label_image.move(145, 300)
         
-        # 1. Create the menu bar
-        # 2. Create an item in the menu bar
-        # 3. Creaate an action to be executed the option in the  menu bar is choosen
-        
+        # create menu options
         mainMenu = self.menuBar()
         
         fileMenu = mainMenu.addMenu('File')
@@ -1211,46 +1261,34 @@ class Menu(QMainWindow):
         model = mainMenu.addMenu('Modelling') 
         
         pred = mainMenu.addMenu('Prediction Game') 
-        
 
-        # Exit action
-        # The following code creates the the da Exit Action along
-        # with all the characteristics associated with the action
-        # The Icon, a shortcut , the status tip that would appear in the window
-        # and the action
-        #  triggered.connect will indicate what is to be done when the item in
-        # the menu is selected
-        # These definitions are not available until the button is assigned
-        # to the menu
-        
-        # exit tabs
-        
+        # create about us section        
         file3Button = QAction("About Us", self)   
         file3Button.setStatusTip("Information about our project")   
         file3Button.triggered.connect(self.file3)     
     
-        
+        # legal info section
         file5Button = QAction("IMDb Legal Information", self)   
         file5Button.setStatusTip("IMDb Legal Information")   
         file5Button.triggered.connect(self.file5) 
         
-        
+        # link to our report section
         file2Button = QAction("Link to our report", self)   
         file2Button.setStatusTip("Here you can find the full report of our results")   
         file2Button.triggered.connect(self.file2)    
         
-        
+        # link to data set section
         file4Button = QAction("Link to the dataset", self)   
         file4Button.setStatusTip("Link to the dataset on Kaggle")   
         file4Button.triggered.connect(self.file4) 
         
-        
+        # exit button
         exitButton = QAction(QIcon('enter.png'), '&Exit', self)
         exitButton.setShortcut('Ctrl+Q')
         exitButton.setStatusTip('Exit application')
         exitButton.triggered.connect(self.close)
         
-        
+        # add them all to the file menu options
         fileMenu.addAction(file3Button)
         fileMenu.addAction(file5Button)
         fileMenu.addAction(file2Button)
@@ -1271,6 +1309,7 @@ class Menu(QMainWindow):
         preproc3Button.setStatusTip("The target variable")  
         preproc3Button.triggered.connect(self.preproc3)
 
+        # add to preprocessing menu
         preproc.addAction(preproc1Button)    
         preproc.addAction(preproc2Button)
         preproc.addAction(preproc3Button)
@@ -1297,16 +1336,19 @@ class Menu(QMainWindow):
         model5button.setStatusTip("Model and Results Evaluation")   
         model5button.triggered.connect(self.model5)  
 
+        # add to modelling menu
         model.addAction(model1button)
         model.addAction(model2button)
         model.addAction(model3button)
         model.addAction(model4button)
         model.addAction(model5button)
 
+        # create prediction section
         pred1button = QAction("Let's Predict",  self)
         pred1button.setStatusTip("This tool will make a prediction for a movie")   
         pred1button.triggered.connect(self.pred1) 
         
+        # add to menu option
         pred.addAction(pred1button)
         
         # This line shows the windows
@@ -1315,18 +1357,23 @@ class Menu(QMainWindow):
 
         self.show()
     
+    # open our report
     def file2(self):
         webbrowser.open('https://docs.google.com/document/d/15mzM34VmwNzyYF0Mygbi-N_v0qPVQXY8LAIWD_Nz-p8/edit?usp=sharing') # this will be our report
         
+    # give info about us
     def file3(self):
         QMessageBox.about(self, "About Us", "We created this project in fall 2021 as part of our Intro to Data Mining Course at George Washington University. In this project, we took Stefano Leone’s IMDb dataset on Kaggle, and used different modeling techniques to predict the weighted average vote of movies based on their features. ")
     
+    # open dataset
     def file4(self):
         webbrowser.open('https://www.kaggle.com/stefanoleone992/imdb-extensive-dataset')
     
+    # give legal info
     def file5(self):
         QMessageBox.about(self, "IMDb License", "IMDb, IMDb.COM, and the IMDb logo are trademarks of IMDb.com, Inc. or its affiliates.")
     
+    # preprocessing open windows
     def preproc1(self):
         dialog = NumericalVars()
         self.dialogs.append(dialog) 
@@ -1342,6 +1389,7 @@ class Menu(QMainWindow):
         self.dialogs.append(dialog) 
         dialog.show()
         
+    # modelling open windows
     def model1(self):
         dialog = ModelstoTry()
         self.dialogs.append(dialog) 
@@ -1367,21 +1415,26 @@ class Menu(QMainWindow):
         self.dialogs.append(dialog) 
         dialog.show()
         
+    # prediction open windws
     def pred1(self):
         dialog = predi()
         self.dialogs.append(dialog) 
         dialog.show()
       
 
-#::------------------------
-#:: Application starts here
-#::------------------------
+
+# Application starts here
+
 
 if __name__ == "__main__":
+    # run unzip results
     unzip_results()
     # change these to your file paths if you want to run the GUI by itself
     df = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\moviesdf.csv')
     pred = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\predictions_with_ids.csv')
-    app = QApplication(sys.argv)  # creates the PyQt5 application
-    mn = Menu()  # Creates the menu
+    # creates the PyQt5 application
+    app = QApplication(sys.argv)
+    # Creates the menu
+    mn = Menu()
+    # create exit
     sys.exit(app.exec_())
