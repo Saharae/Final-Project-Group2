@@ -23,7 +23,7 @@ py -3 main.py
 - GUI code.py: script to create and show GUI.
 
 # Other files
-- requirements.txt: Pytyhon package requirements to run this project. Install using:
+- requirements.txt: Python package requirements to run this project. Install using:
 ```
 pip install -r /path/to/requirements.txt
 ```
