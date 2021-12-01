@@ -14,6 +14,11 @@ import pickle
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import PredefinedSplit, GridSearchCV, validation_curve, learning_curve
 class Dataset:
+    '''
+    The Dataset class represents our data and wraps our train, validation, 
+    and testing datasets into one object and has several methods to help with 
+    general data manipulation and returning specific objects. 
+    '''
     def __init__(self, train_df, test_df, val_df, random_seed, label):
         '''
         Init method, set attributes, set numpy random seed
@@ -112,7 +117,8 @@ class Dataset:
 
     def get_train_val_predefined_split(self):
         '''
-        Method to combine train and validation dataset into one and set predefined split for CV
+        Method to combine train and validation dataset into one and set predefined split for CV.
+        Code for this function repurposed from Professor Yuxiao (James) Huang's Machine Learning I course.
 
         Parameters:
             self: instance of object
@@ -134,6 +140,9 @@ class Dataset:
         return self.X_train_val, self.Y_train_val, self.test_X, self.test_Y, self.ps
 
 class Model:
+    '''
+    The Model class represents our model and it wraps much of the functionalities to train, calculate error, etc into one object.
+    '''
     def __init__(self, random_seed, train_x=None, train_y=None, val_x=None, val_y=None, test_x=None, test_y=None, name=None, target_scaler=None):
         '''
         Init method for Model class
@@ -397,6 +406,10 @@ class Model:
         self.model.set_params(**params_dict)
 
 class ModelTuner(Model):
+    '''
+    The ModelTuner(Model) class is a child class of the Model class and represents an 
+    object to help tune the hyperparameters of the parent model object
+    '''
     def __init__(self, path, random_seed, train_x, train_y, test_x=None, test_y=None, name=None, target_scaler=None, ps=None, models_pipe=None, params=None):
         '''
         Init method for ModelTuner, child of Model
@@ -750,7 +763,7 @@ class Plotter:
 
     def most_important_features(self, train_df, model, saveplot=True, show=False, alt=0):
         '''
-        Method to perform analysis to get most important features from RandomForest.
+        Method to perform analysis to get most important features from RandomForest and plot bar chart.
 
         Parameters
             self: instance of object
