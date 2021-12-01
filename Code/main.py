@@ -30,6 +30,42 @@ import GUI as gui
 if __name__ == "__main__":
     startTime = time.time()
 
+    base_estimators = False
+    tuning = False
+    fastgrid = False
+    demo = True
+
+    args = sys.argv
+    if len(args) > 1:
+        command = args[1]
+
+        if command == 'nap':
+            print("You're running all possible tuning and modeling. 2+ hours")
+            base_estimators = True
+            tuning = True
+            fastgrid = False
+            demo = False
+        elif command == 'lunch':
+            print("You're running with fewer hyperparameters. 10-15 min")
+            base_estimators = False
+            tuning = True
+            fastgrid = True
+            demo = False
+        elif command == 'coffee':
+            print("You're running with no tuning. 5 min")
+            base = False
+            tuning = False
+            fastgrid = False
+            demo = False
+        elif command == 'demo':
+            print("You're skipping the modeling and using pre generated results.")
+        else:
+            print("You submitted an argument that didn't match any of the options. We're going to run with the DEMO option. Possible options are:\nnap - run all processes and grid searches (2+ hours)\nlunch - run search with fewer hyperparameters (10-15 min)\ncoffee - skip tuning and runs with the best model in the .pkl file (5 min)\ndemo - doesn't run the models and uses the saved results in the GUI (0 min)\n\nif you put no command it will default to demo.\nEnjoy the GUI!")
+    else:
+        print("You're running with the demo option!")
+
+
+
     print('Executing', __name__)
     # Run data download and setup
     print('Downloading Data (this may take around a minute)')
@@ -63,11 +99,11 @@ if __name__ == "__main__":
         # Set demo = True
     
     mdl.run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched,
-                             run_base_estimators = False, #Run base models comparison or not
-                             run_model_tuning = False, #Run hyperparameter tuning and gridsearchcv or not
-                             fast_gridsearch = False, #Skip most of gridsearchcv to run faster
+                             run_base_estimators = base_estimators, #Run base models comparison or not
+                             run_model_tuning = tuning, #Run hyperparameter tuning and gridsearchcv or not
+                             fast_gridsearch = fastgrid, #Skip most of gridsearchcv to run faster
                              save_model = True, #Save best model results or not
-                             demo = True) #Demo = True will skip all of modeling since we already have results
+                             demo = demo) #Demo = True will skip all of modeling since we already have results
 
     # GUI
     print('Creating the GUI')
