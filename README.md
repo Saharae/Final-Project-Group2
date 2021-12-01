@@ -1,8 +1,10 @@
 # miscface - Group2
-## Data Mining Final Project 2021
+## George Washington University, Introduction to Data Mining - DATS6103, Fall 2021
 
 ![misc.face()](https://s3-ap-south-1.amazonaws.com/av-blog-media/wp-content/uploads/2017/02/28105325/DF_31.png)
 
+## Project
+Predicting Movies' IMDb Ratings with Machine Learning
 ## Table of Contents
 1. [Team Members](#team_members)
 2. [Timeline](#timeline)
@@ -22,14 +24,13 @@
 ## Timeline
 - [X] Dataset and Topic Chosen - Oct 28th
 - [X] Group Proposal - Nov 1st
-- [ ] Code done + rough GUI done - Nov 22nd
-- [ ] Rough Draft of presentation - Nov 29nd
-- [ ] Final Presentation and report - Dec 6th
+- [X] Code done + rough GUI done - Nov 22nd
+- [X] Rough Draft of presentation - Nov 29nd
+- [X] Final Presentation and report - Dec 6th
 
 ## Things to Remember
-- [ ] READMEs and documentation
-- [ ] requirements.txt
-- [ ] 
+- [X] READMEs and documentation
+- [X] requirements.txt
  
 # <a name="topic_proposal"></a>
 ## Topic Proposal
@@ -42,9 +43,11 @@
 * [Kaggle IMDB Movies Dataset](https://www.kaggle.com/stefanoleone992/imdb-extensive-dataset?select=IMDb+ratings.csv)
 # <a name="presentation"></a>
 ## Presentation
+* [Google Slides Presentation](https://docs.google.com/presentation/d/1ovhlTF3I91rgXGHyGw-c16eZaspBXf1D_hGZrHxvosc/edit?usp=sharing)
 
 # <a name="report"></a>
 ## Report
+* [Final Report Google Doc](https://docs.google.com/document/d/15mzM34VmwNzyYF0Mygbi-N_v0qPVQXY8LAIWD_Nz-p8/edit?usp=sharing)
 
 # <a name="resources"></a>
 ## Additional Resources
