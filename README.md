@@ -10,6 +10,8 @@ Predicting Movies' IMDb Ratings with Machine Learning
 
 ## Table of Contents
 1. [Team Members](#team_members)
+2. [How to Run](#instructions)
+3. [Folder Structure](#structure)
 2. [Timeline](#timeline)
 3. [Topic Proposal](#topic_proposal)
 4. [Datasets](#datasets)
@@ -22,6 +24,35 @@ Predicting Movies' IMDb Ratings with Machine Learning
 * [Sahara Ensley](https://github.com/Saharae)
 * [Adam Kritz](https://github.com/adamkritz)
 * [Joshua Ting](https://github.com/justjoshtings)
+
+# <a name="instructions"></a>
+## How to Run
+1. Clone this repo
+2. Navigate to the Code folder and install the requirements.txt file  
+    `pip install -r requirements.txt`
+3. There are 4 option for running our project:  
+Make sure you are located in the Code directory. Or run the full path to the main.py file.  
+    i. 'demo': This will skip any modeling and run the GUI with previously generated results. It will take 1 minute
+     to run.  
+    `python3 main.py demo`  
+    ii. 'coffee': This will choose the best model based on the saved .pkl file and run it with no tuning. 5 min.  
+    `python3 main.py coffee`  
+    iii. 'lunch': This will run the modeling code with fewer hyperparameters to speed it up. 10-15 min.  
+    `python3 main.py lunch`  
+    iv. 'nap': This will run the entire modeling code with the full grid search of all the hyperparameters. 2+ hours.  
+    `python3 main.py nap`  
+    v. If you run with no argument it will default to the demo mode.  
+    `python3 main.py`
+
+# <a name="structure"></a>
+## Folder Structure
+- Code: This folder contains all the final code for the project. To run this project navigate to this folder.
+- Final-Group-Presentation: This folder contains the presentation we will be giving in class on 12/06/21.
+- Final-Group-Project-Report: This folder contains the final report we will be turning in describing the project and
+ results.
+- Group-Proposal: This folder contains the initial proposal for our project
+- results: This folder contains results from the models we tuned. The GUI pulls from this folder.
+- *-individual-project: These folders contain the individual code and report for each team member.
 
 # <a name="timeline"></a>
 ## Timeline
