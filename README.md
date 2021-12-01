@@ -5,6 +5,9 @@
 
 ## Project
 Predicting Movies' IMDb Ratings with Machine Learning
+
+![Our Model](https://github.com/Saharae/Final-Project-Group2/tree/main/assets/model_results.png?raw=true)
+
 ## Table of Contents
 1. [Team Members](#team_members)
 2. [Timeline](#timeline)
