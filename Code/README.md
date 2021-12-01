@@ -28,4 +28,8 @@ py -3 main.py
 pip install -r /path/to/requirements.txt
 ```
 
+# Our Code Architecture
+
+![Code Architecture](https://github.com/Saharae/Final-Project-Group2/tree/main/assets/code_architecture.png?raw=true)
+
 

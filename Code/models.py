@@ -278,7 +278,8 @@ def run_modeling_wrapper(df_train, df_test, df_val, ss_target, df_test_untouched
         elif platform == "win32":   
             results_eval = Plotter(get_repo_root_w() + '\\results\\model_plots\\', name='Results Evaluation', savename='results_eval')
             
-        results_eval.most_important_features(train_df=df_train.iloc[:,:-1], model=model_to_use.model, show=False, saveplot=True)
+        df_train.drop(['weighted_average_vote'], axis=1, inplace=True)
+        results_eval.most_important_features(train_df=df_train, model=model_to_use.model, show=False, saveplot=True)
 
         # Better than random test
         test_Y_random = np.random.uniform(1, 10, size=test_Y.shape)
