@@ -1,0 +1,17 @@
+joblib==1.1.0
+kaggle==1.5.12
+matplotlib @ file:///opt/concourse/worker/volumes/live/41e8cd50-031f-4dda-5787-dd3c4f4e0f08/volume/matplotlib-suite_1613407855571/work
+numpy==1.21.3
+numpydoc @ file:///tmp/build/80754af9/numpydoc_1605117425582/work
+pandas==1.2.4
+pandocfilters @ file:///opt/concourse/worker/volumes/live/c330e404-216d-466b-5327-8ce8fe854d3a/volume/pandocfilters_1605120442288/work
+QtAwesome @ file:///tmp/build/80754af9/qtawesome_1615991616277/work
+qtconsole @ file:///tmp/build/80754af9/qtconsole_1616775094278/work
+QtPy==1.9.0
+scikit-image==0.18.1
+scikit-learn==1.0.1
+scipy==1.7.1
+seaborn @ file:///tmp/build/80754af9/seaborn_1608578541026/work
+sklearn==0.0
+xlrd @ file:///tmp/build/80754af9/xlrd_1608072521494/work
+XlsxWriter @ file:///tmp/build/80754af9/xlsxwriter_1617224712951/work
