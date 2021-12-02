@@ -37,7 +37,6 @@ def get_repo_root():
     
     return current_path
 
-
 def get_repo_root_w():
     '''
     Function to get the repo base path of '.../Final-Project-Group2' so anyone can run.
@@ -66,9 +65,14 @@ def get_repo_root_w():
     
     return current_path
 
-
-
 def load_all(base):
+    '''
+    Loads data from data folders.
+
+    This is deprecated as the data should be loaded by the data downloader, but as a fall back we're keeping it
+    :param base: base directory to pull from
+    :return: necessary loaded data frames. ratings, movies, names, inflation, title_principals
+    '''
     ratings = pd.read_csv(f'{base}/data/IMDb ratings.csv')
     movies = pd.read_csv(f'{base}/data/IMDb movies.csv')
     names = pd.read_csv(f'{base}/data/IMDb names.csv')
@@ -95,7 +99,7 @@ def clean_money(money):
     Function to pass to a column in a pandas dataframe dealing with money
     finds the space after the $ and casts to an int
     :param x:
-    :return:
+    :return: cleaned money value. removes $ and nans out any values that aren't in US dollars
     '''
     if type(money) == float:
         return np.nan
@@ -106,10 +110,21 @@ def clean_money(money):
     return int(trimmed)
 
 def get_primary_country(x):
+    '''
+    Gets the primary country from the original string of countries.
+    Primary country is defined as the first listed countries since they're listed by importance
+
+    To match ISO country codes some countries needed formatting changes
+
+    :param x: country string from movies data frame
+    :return: Single primary country with correct name
+    '''
     if type(x) == float:
         return np.nan
 
     country = x[0]
+
+    # reformatting where necessary based off UN country names
     country_switch = {
         'USA' : 'United States of America',
         'UK' : 'United Kingdom of Great Britain and Northern Ireland',
@@ -135,6 +150,11 @@ def get_primary_country(x):
     return country
 
 def to_region(df):
+    '''
+    Pulls UN country/region codes and maps the primary country name to the region. If no country then it gets "None"
+    :param df: full merged movies dataset
+    :return: movies dataframe with region column
+    '''
     url = 'https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.csv'
     regions = pd.read_csv(url)
     regions = regions[['name', 'region']].copy()
@@ -143,12 +163,14 @@ def to_region(df):
     df_full['region'] = df_full['region'].fillna('None')
     return df_full
 
-
 def merge_and_clean_movies(movies, ratings, inflation):
     '''
     Returns a cleaned and merged movies table merged with the ratings
+
+    Not completely preprocessed, just the first step. Drops unecessary columns and does initial transformations.
     :param movies: movies dataset
     :param ratings: ratings dataset
+    :param inflation: cleaned inflation dataset
     :return: cleaned movies dataset
     '''
 
@@ -637,8 +659,14 @@ def get_train_test_val(data, test_size = 0.3, val_size = 0.2):
 
     return df_train, df_test, df_val
 
-
 def expand_date(df, col_to_expand, keep_original = False):
+    '''
+    Expands the date column into 3 columns of the year, month, and day
+    :param df: dataframe with the column to transform
+    :param col_to_expand: name of date column
+    :param keep_original: whether or not to keep the original column. if False the original column will be dropped
+    :return: dataframe with expanded columns
+    '''
 
     df[col_to_expand+'_year'] = df[col_to_expand].dt.year
     df[col_to_expand + '_month'] = df[col_to_expand].dt.month
@@ -650,6 +678,12 @@ def expand_date(df, col_to_expand, keep_original = False):
     return df
 
 def get_missing(df):
+    '''
+    Given a dataframe this will calculate how much of each column is missing values.
+    Separates the numerical and categorical values and constructs 2 dataframes with column name and percentage null
+    :param df: dataframe to compute missing values from
+    :return: to_impute_num - missing numerical values to_impute_cat - missing categorical values
+    '''
     percent_missing = pd.DataFrame(df.isnull().sum() * 100 / len(df)).reset_index().rename(columns = {'index':'var', 0:'perc'})
     percent_missing['dtype'] = percent_missing.apply(lambda x: str(df[x['var']].dtype), axis = 1)
     to_impute_num = percent_missing[(percent_missing['dtype'].isin(['int64', 'float64'])) & (percent_missing['perc'] > 0)]
@@ -659,10 +693,16 @@ def get_missing(df):
 
 def autobots_assemble(df_train, df_test, df_val, names, target):
     '''
-    Transforms the data
-    :param df: data to transform
-    :return: transformed data lmao
+    Main function to transform the data set. does individual column transformations and then imputes and scales
+    :param df_train: training dataframe
+    :param df_test: testing dataframe
+    :param df_val: validation dataframe
+    :param names: merged and cleaned names dataframe
+    :param target: target variable
+    :return: df_train, df_test, df_val, ss_target - scaling object used for the target,
+            df - combined dataframe unscaled (for plotting mostly), df_test_untouched (original df test without any modification)
     '''
+
     # combine data for some transformations
     df = pd.concat([df_train, df_val, df_test], sort = False)
 
@@ -749,6 +789,20 @@ def autobots_assemble(df_train, df_test, df_val, names, target):
     return df_train, df_test, df_val, ss_target, df, df_test_untouched
 
 def preprocess(ratings, movies, names, title_principals, inflation):
+    '''
+    preprocessing wrapper function that calls all necessary functions
+    :param ratings: raw ratings dataframe
+    :param movies: raw movies dataframe
+    :param names: raw names dataframe
+    :param title_principals: raw title principals dataframe
+    :param inflation: raw inflation dataframe
+    :return: df_train - clean and processed training dataset,
+            df_test - clean and processed testing dataset,
+            df_val - clean and processed validation dataset,
+            ss_target - scaling object for the target,
+            df - unsclaed combined dataframe for plotting,
+            df_test_untouched - testing dataframe un-transformed
+    '''
     inflation_clean = clean_inflation(inflation)
     movies = merge_and_clean_movies(movies, ratings, inflation_clean)
     names = merge_and_clean_names(names, title_principals)
@@ -762,6 +816,9 @@ def preprocess(ratings, movies, names, title_principals, inflation):
     return df_train, df_test, df_val, ss_target, df, df_test_untouched
 
 if __name__ == "__main__":
+    '''
+        I think this can be cleared out - it will fail if we try to run it
+    '''
     print('Executing', __name__)
     df_train, df_test, df_val = preprocess()
 
@@ -776,6 +833,3 @@ if __name__ == "__main__":
     print(df_train.head())
 else:
     print('Importing:', __name__)
-
-# just so I don't keep losing this line. delete later
-# percent_missing = df.isnull().sum() * 100 / len(df)
