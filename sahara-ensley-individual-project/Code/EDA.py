@@ -2,6 +2,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.stats as stats
+
 
 def plot_duration(df):
     fig, ax = plt.subplots(nrows = 1, ncols = 1, figsize = (10, 10))
@@ -120,3 +122,10 @@ def stats(df):
     stats['corr'] = df.corr()['weighted_average_vote'].to_numpy()
     stats.loc[['genre_1', 'genre_2', 'genre_3', 'genre_4', 'genre_5', 'genre_6', 'genre_7', 'genre_8', 'genre_9', 'genre_10', 'region_Africa', 'region_Americas', 'region_Asia', 'region_Europe', 'region_None', 'region_Oceania'], ['corr']] = np.nan
     return stats
+
+def decade_anova(df):
+    df['decade'] = pd.cut(df['date_published_year'], np.arange(1910, 2030, 10))
+    df['decade'] = df['decade'].apply(lambda x: x.left)
+    melted = df[['weighted_average_vote', 'decade']].pivot(values = 'weighted_average_vote', columns = 'decade')
+    F, p = stats.f_oneway(melted[1910].dropna(), melted[1920].dropna(), melted[1930].dropna(), melted[1940].dropna(), melted[1950].dropna(), melted[1960].dropna(), melted[1970].dropna(), melted[1980].dropna(), melted[1990].dropna(), melted[2000].dropna(), melted[2010].dropna())
+    return F, p
