@@ -1,5 +1,44 @@
 # -*- coding: utf-8 -*-
 """
+Created on Fri Nov  5 12:28:39 2021
+
+@author: adamkritz
+"""
+
+import pandas as pd
+import kaggle 
+import os
+
+def download():
+    
+
+    # dont push y if you dont wanna make you own working directiory
+    a = input('set a working directory to download to? (y/n)')
+
+    if a == 'y':
+        b = input('input working directory')
+        os.chdir(b)
+
+    # this is just my username and a key they generated for me
+    os.environ['KAGGLE_USERNAME'] = "adamkritz"
+    os.environ['KAGGLE_KEY'] = "05c2d7615e732897d1f9e6f75613ee41"
+    
+    kaggle.api.authenticate()
+    kaggle.api.dataset_download_files('stefanoleone992/imdb-extensive-dataset', unzip = True)
+    directory_path = os.getcwd()
+
+    ratings = pd.read_csv(directory_path + '/IMDb ratings.csv')
+    movies = pd.read_csv(directory_path + '/IMDb movies.csv')
+    names = pd.read_csv(directory_path + '/IMDb names.csv')
+    
+    return ratings, movies, names
+    
+download()
+
+# type ratings or something to see if it works
+
+# -*- coding: utf-8 -*-
+"""
 Created on Fri Nov  5 17:04:12 2021
 
 @author: adamkritz
@@ -1438,3 +1477,145 @@ if __name__ == "__main__":
     mn = Menu()
     # create exit
     sys.exit(app.exec_())
+    
+    
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov  5 16:59:31 2021
+
+@author: adamkritz
+"""
+
+# preprocessing code
+
+import pandas as pd
+import os
+
+# you will have to change to your directory
+os.chdir(r'C:\Users\trash\Desktop\data 6103 work\movies for project')
+
+# I used my directory for now, we wi
+
+movies = pd.read_csv('IMDb movies.csv')
+names = pd.read_csv('IMDb names.csv')
+ratings = pd.read_csv('IMDb ratings.csv')
+TP = pd.read_csv('IMDb title_principals.csv')
+
+# one value in the year column is mislabeled, this causes a warning when importing
+movies['year'] = movies['year'].replace('TV Movie 2019', 2019)
+
+# Merging Ratings and Movies (it merges perfectly)
+movies_ratings = movies.merge(ratings, on = 'imdb_title_id')
+
+# Merging movies+ratings with title_principal
+# this merges with 9 extra from the movies_ratings side (9 movies are in movies_ratings that arent in title_principal)
+# and 19 (actually just 2 repeated a lot) extra movies from the title_principal side (19 movies are in title_principal that are not in movies or ratings)
+INDmovies_ratings_TP = movies_ratings.merge(TP, on = 'imdb_title_id', how = 'outer', indicator = True)
+
+# list of the 9 movies
+INDmovies_ratings_TP.loc[INDmovies_ratings_TP['_merge'] == 'left_only']['imdb_title_id']
+onlyin_MR = ['tt10764458', 'tt11010804', 'tt11777308', 'tt3978706', 'tt4045476', 'tt4045478', 'tt4251266', 'tt5440848', 'tt6889806']
+
+# list of the 2 movies repeated 19 times
+INDmovies_ratings_TP.loc[INDmovies_ratings_TP['_merge'] == 'right_only']['imdb_title_id']
+onlyin_tp = ['tt1860336'] * 10 + ['tt2082513'] * 9
+
+# merge again without indicator
+movies_ratings_TP = movies_ratings.merge(TP, on = 'imdb_title_id', how = 'outer')
+
+# Merges movies+ratings+title_principal with names
+INDMRtpN = movies_ratings_TP.merge(names, on = 'imdb_name_id', how = 'outer', indicator = True)
+
+# list of 10 movies only in movies, ratings, and title_principal (9 of them only in movies and ratings, not title_principal)
+INDMRtpN.loc[INDMRtpN['_merge'] == 'left_only']['imdb_title_id']
+onlyin_MRtp = ['tt0091454', 'tt10764458', 'tt11010804', 'tt11777308', 'tt3978706', 'tt4045476', 'tt4045478', 'tt4251266', 'tt5440848', 'tt6889806']
+
+# final product
+MRtpN = movies_ratings_TP.merge(names, on = 'imdb_name_id', how = 'outer')
+print(MRtpN)
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Nov 11 16:32:16 2021
+
+@author: adamkritz
+"""
+
+import pandas as pd
+from urllib.error import HTTPError
+import time
+
+def downloader():
+    
+    # downloads all the data
+    
+    try: 
+    
+        ratingsURL = 'https://drive.google.com/file/d/1CYQE7U9CM1AIt6nMgvIF31X86P-1_wIB/view?usp=sharing'
+        path1 = 'https://drive.google.com/uc?export=download&id='+ratingsURL.split('/')[-2]
+        ratings = pd.read_csv(path1)
+        
+        moviesURL = 'https://drive.google.com/file/d/1xLdKMhZ8eSqny6-UcbssxB9PqdROvgOQ/view?usp=sharing'
+        path2 = 'https://drive.google.com/uc?export=download&id='+moviesURL.split('/')[-2]
+        movies = pd.read_csv(path2)
+        
+        # names was too big to bypass the virus scanner so i split it into 3 parts
+        
+        names1URL = 'https://drive.google.com/file/d/1jscP1KWTqZfcv0F-J5DlmJfSbRgu_ptI/view?usp=sharing'
+        path31 = 'https://drive.google.com/uc?export=download&id='+names1URL.split('/')[-2]
+        names1 = pd.read_csv(path31)
+        
+        names2URL = 'https://drive.google.com/file/d/1chwblAFN_q8FWNFu1PGXRMhShhY-A_7Y/view?usp=sharing'
+        path32 = 'https://drive.google.com/uc?export=download&id='+names2URL.split('/')[-2]
+        names2 = pd.read_csv(path32)
+        
+        names3URL = 'https://drive.google.com/file/d/1hXSEqexkAlLa1nyf8_FszDtl4u_T6cGM/view?usp=sharing'
+        path33 = 'https://drive.google.com/uc?export=download&id='+names3URL.split('/')[-2]
+        names3 = pd.read_csv(path33)
+        
+        # and recombined it all
+        
+        names = pd.concat([names1, names2, names3], ignore_index=True)
+        
+        TPURL = 'https://drive.google.com/file/d/1lIg_Ty6tbjTaIhnxoacar3cNuK4W0JTS/view?usp=sharing'
+        path4 = 'https://drive.google.com/uc?export=download&id='+TPURL.split('/')[-2]
+        title_principals = pd.read_csv(path4)
+        
+        InflationURL = 'https://drive.google.com/file/d/1T4jLbFHXvZEY_CQRQgGyQiDsPhwClUYk/view?usp=sharing'
+        path5 = 'https://drive.google.com/uc?export=download&id='+InflationURL.split('/')[-2]
+        inflation = pd.read_csv(path5)
+        
+        predURL = 'https://drive.google.com/file/d/1TybrmIpx6ClZdlzCllrFZ4jJljx_pIaQ/view?usp=sharing'
+        path6 = 'https://drive.google.com/uc?export=download&id='+predURL.split('/')[-2]
+        pred = pd.read_csv(path6)
+    
+        return ratings, movies, names, title_principals, inflation, pred
+    
+    except HTTPError:
+        
+        print('Google likely timed you out for repeatedly downloading the data, or the Google servers are experiencing issues. \nWe will wait a few minutes and then run the downloader again automatically for you.')
+
+        time.sleep(300)
+        
+        downloader()
+
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov 19 16:34:28 2021
+
+@author: adamkritz
+"""
+
+# code used to split data
+
+import pandas as pd
+import numpy as np
+
+x = pd.read_csv(r'C:\Users\trash\Desktop\data 6103 work\movies for project\IMDb names.csv')
+
+df1, df2, df3 = np.array_split(x, 3)
+
+df1.to_csv(r'C:\Users\trash\Desktop\data 6103 work\movies for project\names1.csv', index = False)
+df2.to_csv(r'C:\Users\trash\Desktop\data 6103 work\movies for project\names2.csv', index = False)
+df3.to_csv(r'C:\Users\trash\Desktop\data 6103 work\movies for project\names3.csv', index = False)
+
