@@ -56,7 +56,6 @@ def plot_worldwide_income(df):
     sns.despine()
     return fig, ax
 
-
 def plot_votes(df):
     '''
     plots target feature histogram
