@@ -30,8 +30,7 @@ Predicting Movies' IMDb Ratings with Machine Learning
 1. Clone this repo
 2. Navigate to the Code folder and install the requirements.txt file  
     `pip install -r requirements.txt`
-3. Open the results.zip file so there is a results folder in this repo
-4. There are 4 option for running our project:  
+3. There are 4 option for running our project:  
 Make sure you are located in the Code directory. Or run the full path to the main.py file.  
     i. 'demo': This will skip any modeling and run the GUI with previously generated results. It will take 1 minute
      to run.  
