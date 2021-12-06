@@ -99,3 +99,9 @@ Rough initial function to generate train test splits.\
 ```python:
 feature_vals, target_vals, X_train, X_test, y_train, y_test = get_train_test(movies, features = ['budget', 'country'], target = ['weighted_average_vote'], encode_target = False, test_size = 0.3)
 ```
+
+EDA.py
+---
+Code to create plots. Each function creates an individual explanatory plot.  
+Also has 2 functions that perform basic statistical analyses.  
+More details can be found in the EDA section of the report, in the Final-Report folder.
