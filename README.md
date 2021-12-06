@@ -18,6 +18,7 @@ Predicting Movies' IMDb Ratings with Machine Learning
 5. [Presentation](#presentation)
 6. [Report](#report)
 7. [Additional Resources](#resources)
+8. [Licensing](#license)
 
 # <a name="team_members"></a>
 ## Team Members
@@ -87,3 +88,8 @@ Make sure you are located in the Code directory. Or run the full path to the mai
 ## Additional Resources
 * [Feature Engineering for Categorical Data](https://medium.com/geekculture/feature-engineering-for-categorical-data-a77a04b3308)
 * [Categorical Data](https://towardsdatascience.com/understanding-feature-engineering-part-2-categorical-data-f54324193e63)
+
+# <a name="license"></a>
+## Licensing
+* MIT License
+* IMDb, IMDb.COM, and the IMDb logo are trademarks of IMDb.com, Inc. or its affiliates.
